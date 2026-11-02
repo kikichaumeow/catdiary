@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>貓貓日記</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E7E1CE;
+    --paper-2:#F1ECDD;
+    --card:#FBF8EE;
+    --ink:#2E3A34;
+    --ink-soft:#66756C;
+    --moss:#748569;
+    --tabby:#C07C3E;
+    --tabby-dark:#8C5A28;
+    --brick:#A85843;
+    --clinical:#4F7285;
+    --line:rgba(46,58,52,.16);
+    --line-strong:rgba(46,58,52,.28);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(46,58,52,.05) 1px, transparent 0);
+    background-size:14px 14px;
+    color:var(--ink);
+    font-family:'Noto Sans TC','Noto Sans',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 60px;}
+  .masthead{
+    display:flex;align-items:baseline;justify-content:space-between;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;margin-bottom:20px;
+    flex-wrap:wrap;gap:10px;
+  }
+  .masthead h1{
+    font-family:'Noto Serif TC',serif;font-weight:700;
+    font-size:26px;margin:0;letter-spacing:.04em;color:var(--ink);
+  }
+  .masthead .sub{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);
+  }
+  .cattabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;}
+  .cattab{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 14px;border-radius:3px 3px 0 0;
+    border:1px solid var(--line-strong);border-bottom:none;
+    background:var(--paper-2);cursor:pointer;
+    font-size:14px;color:var(--ink-soft);
+    position:relative;top:1px;
+  }
+  .cattab.active{
+    background:var(--card);color:var(--ink);font-weight:500;
+    border-color:var(--ink);
+    box-shadow:0 -2px 0 0 var(--catcolor,var(--tabby)) inset;
+  }
+  .cattab .dot{width:9px;height:9px;border-radius:50%;background:var(--catcolor,var(--tabby));flex-shrink:0;}
+  .cattab .delcat{
+    margin-left:2px;color:var(--ink-soft);font-size:11px;line-height:1;
+    padding:2px 4px;border-radius:50%;cursor:pointer;
+  }
+  .cattab .delcat:hover{color:#fff;background:var(--brick);}
+  .cattab.addnew{
+    color:var(--tabby-dark);border-style:dashed;background:transparent;
+    font-weight:500;
+  }
+  .addcat-form{
+    display:flex;gap:8px;margin:-14px 0 22px;padding:14px;
+    background:var(--card);border:1px solid var(--line-strong);
+    border-radius:0 4px 4px 4px;flex-wrap:wrap;align-items:center;
+  }
+  .addcat-form input[type=text]{flex:1;min-width:140px;}
+  .swatches{display:flex;gap:6px;}
+  .swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;}
+  .swatch.sel{border-color:var(--ink);}
+
+  .board{background:var(--card);border:1px solid var(--line-strong);border-radius:6px;overflow:hidden;}
+  .datebar{
+    display:flex;align-items:center;justify-content:center;gap:16px;
+    padding:14px;border-bottom:1px solid var(--line);
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .datebar button{
+    background:none;border:1px solid var(--line-strong);width:30px;height:30px;
+    border-radius:50%;cursor:pointer;color:var(--ink);font-size:15px;line-height:1;
+  }
+  .datebar button:hover{background:var(--paper-2);}
+  .datebar .datelabel{font-size:15px;font-weight:600;min-width:170px;text-align:center;}
+  .datebar .today-btn{
+    font-family:'Noto Sans TC',sans-serif;font-size:12px;border-radius:14px;
+    width:auto;padding:0 12px;height:26px;color:var(--tabby-dark);border-color:var(--tabby);
+  }
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:1px;background:var(--line);border-top:1px solid var(--line);}
+  .stat{background:var(--card);padding:12px 14px;}
+  .stat .n{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:var(--ink);}
+  .stat .l{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+
+  .grid{display:grid;grid-template-columns:1.1fr 1.4fr;gap:0;}
+  .panel{padding:18px 20px;}
+  .panel.stamps{border-right:1px solid var(--line);}
+  .panel h2{
+    font-family:'Noto Serif TC',serif;font-size:14px;margin:0 0 12px;
+    color:var(--ink-soft);font-weight:600;letter-spacing:.05em;
+  }
+  .stampgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .stampbtn{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    padding:8px 3px;border:1.5px solid var(--line-strong);border-radius:6px;
+    background:var(--paper-2);cursor:pointer;color:var(--catcolor,var(--tabby));
+    transition:transform .1s ease;
+  }
+  .stampbtn:hover{border-color:currentColor;background:var(--card);}
+  .stampbtn:active{transform:scale(.95);}
+  .stampbtn.on{background:var(--card);border-color:currentColor;box-shadow:0 0 0 1px currentColor inset;}
+  .stampbtn svg{width:19px;height:19px;}
+  .stampbtn span{font-size:10.5px;color:var(--ink);font-weight:500;}
+
+  .quickform{
+    margin-top:14px;padding:14px;background:var(--paper-2);
+    border:1px dashed var(--line-strong);border-radius:6px;
+  }
+  .quickform .frow{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+  .quickform label{font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;}
+  .quickform .fitem{flex:1;min-width:110px;}
+  input,select,textarea{
+    width:100%;font-family:inherit;font-size:13px;color:var(--ink);
+    border:1px solid var(--line-strong);border-radius:4px;padding:7px 8px;
+    background:var(--card);
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--tabby);outline-offset:-1px;}
+  textarea{resize:vertical;min-height:44px;}
+  .stampsubmit{
+    margin-top:8px;width:100%;padding:9px;border-radius:4px;border:none;
+    background:var(--catcolor,var(--tabby));color:#fff;font-weight:600;
+    cursor:pointer;font-size:13px;letter-spacing:.03em;
+  }
+  .stampsubmit:hover{filter:brightness(1.08);}
+
+  .timeline{padding:18px 20px;min-height:260px;}
+  .empty{
+    color:var(--ink-soft);font-size:13px;text-align:center;padding:40px 10px;
+    font-family:'Noto Serif TC',serif;
+  }
+  .entry{
+    display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);
+    animation:stampIn .28s ease-out;
+  }
+  .entry:last-child{border-bottom:none;}
+  @keyframes stampIn{
+    0%{opacity:0;transform:scale(1.5) rotate(-8deg);}
+    60%{opacity:1;}
+    100%{opacity:1;transform:scale(1) rotate(var(--tilt,-2deg));}
+  }
+  .stampicon{
+    width:34px;height:34px;flex-shrink:0;color:var(--c,var(--tabby));
+    filter:url(#inkTexture);transform:rotate(var(--tilt,-2deg));
+  }
+  .entrybody{flex:1;min-width:0;}
+  .entrytop{display:flex;justify-content:space-between;gap:8px;align-items:baseline;}
+  .entrytype{font-weight:500;font-size:13.5px;}
+  .entrytime{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  .entrydetail{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .entrynote{font-size:12.5px;color:var(--ink);margin-top:3px;font-style:italic;}
+  .wdiff{font-weight:600;}
+  .wdiff.up{color:var(--tabby-dark);}
+  .wdiff.down{color:var(--clinical);}
+  .wdiff.same{color:var(--ink-soft);font-weight:500;}
+  .lastweight{font-size:12px;color:var(--ink-soft);margin-bottom:8px;padding:6px 8px;background:var(--card);border-radius:4px;border:1px solid var(--line);}
+  .bloodsection-title{font-size:12px;font-weight:600;color:var(--ink);margin:10px 0 4px;font-family:'Noto Serif TC',serif;}
+  .bloodgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px 10px;margin-bottom:6px;}
+  .bloodgrid .bitem{display:flex;flex-direction:column;}
+  .bloodgrid label{font-size:10px;color:var(--ink-soft);margin-bottom:2px;display:flex;justify-content:space-between;gap:4px;line-height:1.2;}
+  .bloodgrid label .ref{font-family:'IBM Plex Mono',monospace;font-size:9px;opacity:.7;white-space:nowrap;}
+  .bloodgrid input{padding:5px 6px;font-size:12px;}
+  .bloodgrid .lastval{font-size:9.5px;color:var(--tabby-dark);margin-top:1px;}
+  .bloodresult{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:2px 10px;font-size:12px;}
+  .bloodresult .blabel{color:var(--ink-soft);margin-right:2px;}
+  .bloodresult .bval.high{color:var(--brick);font-weight:600;}
+  .bloodresult .bval.low{color:var(--clinical);font-weight:600;}
+  .delbtn{
+    background:none;border:none;color:var(--ink-soft);cursor:pointer;
+    font-size:11px;padding:2px 6px;flex-shrink:0;
+  }
+  .delbtn:hover{color:var(--brick);}
+
+  .healthcard{padding:16px 20px;border-top:1px solid var(--line);background:var(--paper-2);}
+  .hc-title{font-family:'Noto Serif TC',serif;font-size:14px;font-weight:600;color:var(--ink-soft);margin:0 0 10px;letter-spacing:.05em;}
+  .vetreminder{display:flex;align-items:center;gap:8px;padding:9px 12px;margin-bottom:12px;background:rgba(79,114,133,.12);border:1px solid var(--clinical);border-radius:4px;font-size:13px;color:var(--clinical);}
+  .vetreminder b{font-weight:600;}
+  .vetreminder svg{width:16px;height:16px;flex-shrink:0;}
+  .hc-condition{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .hc-condition label{font-size:12px;color:var(--ink-soft);white-space:nowrap;}
+  .hc-condition input{max-width:340px;border-color:var(--clinical);}
+  .medtable{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:12px;}
+  .medtable th{text-align:left;color:var(--ink-soft);font-weight:500;font-size:11px;padding:4px 6px;border-bottom:1px solid var(--line-strong);}
+  .medtable td{padding:6px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .medname{font-weight:500;}
+  .meddose{color:var(--ink-soft);}
+  .medprogress{display:inline-flex;gap:3px;vertical-align:middle;}
+  .meddot{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--clinical);display:inline-block;}
+  .meddot.filled{background:var(--clinical);}
+  .med-del{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:11px;}
+  .med-del:hover{color:var(--brick);}
+  .addmed-form{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;}
+  .addmed-form .fitem{flex:1;min-width:90px;}
+  .addmed-form label{font-size:10px;color:var(--ink-soft);display:block;margin-bottom:2px;}
+  .addmed-btn{padding:7px 14px;border-radius:4px;border:none;background:var(--clinical);color:#fff;font-size:12px;cursor:pointer;font-weight:600;}
+  .addmed-btn:hover{filter:brightness(1.08);}
+
+  .syncstate{font-family:'Noto Sans TC',sans-serif;font-size:11px;}
+  .syncstate.ok{color:var(--moss);}
+  .syncstate.wait{color:var(--tabby-dark);}
+  .syncstate.err{color:var(--brick);font-weight:600;}
+  .syncstate.off{color:var(--ink-soft);}
+  .viewtabs{display:flex;gap:0;border-bottom:1px solid var(--line-strong);background:var(--paper-2);}
+  .viewtabs button{flex:1;padding:10px 8px;border:none;background:none;font-family:inherit;font-size:13px;color:var(--ink-soft);cursor:pointer;border-bottom:3px solid transparent;}
+  .viewtabs button.active{color:var(--ink);font-weight:600;border-bottom-color:var(--catcolor,var(--tabby));background:var(--card);}
+  #viewCharts,#viewReport{padding:16px 16px 24px;}
+  .rangebar{display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+  .rangebar span{font-size:12px;color:var(--ink-soft);margin-right:2px;}
+  .rangebar button,.btn-sm{padding:5px 12px;border:1px solid var(--line-strong);border-radius:14px;background:var(--paper-2);font-family:inherit;font-size:12px;color:var(--ink);cursor:pointer;}
+  .rangebar button.on{background:var(--catcolor,var(--tabby));color:#fff;border-color:transparent;}
+  .ccard{background:var(--paper-2);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:14px;}
+  .ccard h3,.rsec h3{font-family:'Noto Serif TC',serif;font-size:14px;margin:0 0 8px;color:var(--ink);font-weight:600;}
+  .chips{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
+  .chips b{color:var(--ink);font-weight:600;font-family:'IBM Plex Mono',monospace;}
+  .chips .bad{color:var(--brick);}
+  .chips .good{color:var(--moss);}
+  .legend{display:flex;gap:12px;font-size:11px;color:var(--ink-soft);margin:2px 0 4px;flex-wrap:wrap;}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px;}
+  .chartempty{padding:22px 0;text-align:center;font-size:12.5px;color:var(--ink-soft);}
+  svg.chart{width:100%;height:auto;display:block;}
+  svg.chart text{font-family:'IBM Plex Mono','Noto Sans TC',monospace;font-size:10.5px;fill:var(--ink-soft);}
+  .tilegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-bottom:14px;}
+  .tile{background:var(--paper-2);border:1px solid var(--line);border-radius:6px;padding:8px 10px;}
+  button.tile{font:inherit;text-align:left;cursor:pointer;color:inherit;}
+  button.tile.sel{border-color:var(--catcolor,var(--tabby));background:var(--card);box-shadow:inset 0 0 0 1px var(--catcolor,var(--tabby));}
+  .tilelist{margin-top:12px;border-top:1px solid var(--line);padding-top:8px;}
+  .tilelist h4{margin:0 0 4px;font-size:12px;color:var(--ink-soft);font-weight:500;}
+  .trow{display:flex;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .trow .td{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);min-width:96px;}
+  .trow .tn{color:var(--ink-soft);}
+  .tile .n{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;}
+  .tile .l{font-size:11px;color:var(--ink-soft);}
+  .barsgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;}
+  .rhead{border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:12px;}
+  .rhead h2{font-family:'Noto Serif TC',serif;font-size:20px;margin:0;}
+  .rhead .rmeta{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .rsec{margin-bottom:16px;}
+  table.rtable{width:100%;border-collapse:collapse;font-size:12px;}
+  table.rtable th{text-align:left;font-weight:500;color:var(--ink-soft);font-size:11px;padding:4px 6px;border-bottom:1px solid var(--line-strong);}
+  table.rtable td{padding:4px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
+  td.hi,span.hi{color:var(--brick);font-weight:600;}
+  td.lo,span.lo{color:var(--clinical);font-weight:600;}
+  .rnote{font-size:11px;color:var(--ink-soft);margin-top:14px;}
+  .ractions{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .ractions button{padding:8px 16px;border-radius:4px;border:none;background:var(--catcolor,var(--tabby));color:#fff;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
+  .ractions button.alt{background:var(--paper-2);color:var(--ink);border:1px solid var(--line-strong);}
+  @media print{
+    @page{size:A4;margin:12mm;}
+    body{background:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .masthead,.cattabs,#addcatArea,.viewtabs,.noprint,#viewRecord,#viewCharts{display:none !important;}
+    .wrap{padding:0;max-width:none;}
+    .board{border:none;}
+    #viewReport{padding:0;display:block !important;}
+    .rsec{break-inside:avoid;}
+  }
+  @media(max-width:640px){
+    .grid{grid-template-columns:1fr;}
+    .panel.stamps{border-right:none;border-bottom:1px solid var(--line);}
+    .medtable{display:block;overflow-x:auto;white-space:nowrap;}
+  }
+</style>
+</head>
+<body>
+<svg style="position:absolute;width:0;height:0">
+  <filter id="inkTexture" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="noise" seed="3"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2"/>
+  </filter>
+</svg>
+
+<div class="wrap">
+  <div class="masthead">
+    <h1>貓貓日記</h1>
+    <div class="sub"><span id="todayLabel"></span> · <span id="syncState" class="syncstate"></span></div>
+  </div>
+
+  <div class="cattabs" id="cattabs"></div>
+  <div id="addcatArea"></div>
+
+  <div class="board" id="board" style="display:none">
+    <div class="viewtabs noprint" id="viewtabs">
+      <button data-view="record" class="active">記錄</button>
+      <button data-view="charts">走勢圖</button>
+      <button data-view="report">醫生報告</button>
+    </div>
+    <div id="viewRecord">
+    <div class="datebar">
+      <button id="prevDay">‹</button>
+      <div class="datelabel" id="dateLabel"></div>
+      <button id="nextDay">›</button>
+      <button class="today-btn" id="todayBtn">今日</button>
+    </div>
+    <div class="grid">
+      <div class="panel stamps">
+        <h2>快速蓋章</h2>
+        <div class="stampgrid" id="stampgrid"></div>
+        <div id="quickformArea"></div>
+      </div>
+      <div class="panel timeline">
+        <h2>今日時間線</h2>
+        <div id="timeline"></div>
+      </div>
+    </div>
+    <div class="healthcard" id="healthcard"></div>
+    <div class="stats" id="stats"></div>
+    </div>
+    <div id="viewCharts" hidden></div>
+    <div id="viewReport" hidden></div>
+  </div>
+
+  <div class="empty" id="noCat" style="display:none">仲未有貓貓資料 —— 撳上面「+ 加隻貓」開始記錄啦。</div>
+</div>
+
+<script>
+const ICONS = {
+  feed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11a8 8 0 0 0 16 0Z"/><path d="M4 11h16"/><path d="M8 11c0-3 1-6 4-6s4 3 4 6"/></svg>',
+  water: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11Z"/></svg>',
+  litter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="9" width="16" height="10" rx="1.5"/><path d="M4 9 7 5h10l3 4"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7.5"/><path d="M12 4.5c2 2.5 2 12.5 0 15M6 8c3 1.5 9 1.5 12 0M6 16c3-1.5 9-1.5 12 0"/></svg>',
+  groom: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="16" rx="1.5"/><path d="M13 6h7M13 10h7M13 14h5"/></svg>',
+  weight: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="13" r="7"/><path d="M9 6l1.5-3h3L15 6"/><path d="M9 13h6"/></svg>',
+  health: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20s-7-4.5-9.5-9C1 8 2.5 4 6.5 4c2 0 3.5 1.2 4 2.5.5-1.3 2-2.5 4-2.5 4 0 5.5 4 4 7-2.5 4.5-6.5 9-6.5 9Z"/><path d="M9 11h2l1-2 2 4 1-2h2"/></svg>',
+  med: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.8" y="8.7" width="18.4" height="6.6" rx="3.3" transform="rotate(-45 12 12)"/><line x1="12" y1="6.8" x2="12" y2="17.2" transform="rotate(-45 12 12)"/></svg>',
+  resp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v8"/><path d="M12 11c-1-3-3-4-5-3-3 1-4 5-2 9 1 2 3 3 4 2 1-1 1-3 1-5"/><path d="M12 11c1-3 3-4 5-3 3 1 4 5 2 9-1 2-3 3-4 2-1-1-1-3-1-5"/></svg>',
+  vet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v6c0 5-3 8-7 9-4-1-7-4-7-9V6l7-3Z"/><path d="M12 8v6M9 11h6"/></svg>',
+  bloodtest: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3h8M9 3v7.3l-3.6 8.2A1.8 1.8 0 0 0 7 21h10a1.8 1.8 0 0 0 1.6-2.5L15 10.3V3"/><path d="M8.3 14.5h7.4"/></svg>'
+};
+const CATEGORIES = [
+  {id:'med',label:'食藥',fields:[]},
+  {id:'resp',label:'呼吸',fields:[
+    {key:'state',label:'狀態',type:'select',opts:['清醒','睡覺']},
+    {key:'rate',label:'每分鐘下數',type:'number',ph:'例:28'}
+  ]},
+  {id:'feed',label:'餵食',fields:[{key:'detail',label:'份量 / 種類',type:'text',ph:'例:半罐吞拿魚'}]},
+  {id:'water',label:'飲水',fields:[{key:'detail',label:'情況',type:'text',ph:'例:換新水'}]},
+  {id:'litter',label:'如廁',fields:[{key:'kind',label:'類型',type:'select',opts:['尿','便','尿同便']}]},
+  {id:'play',label:'玩耍',fields:[{key:'duration',label:'時間(分鐘)',type:'number',ph:'15'}]},
+  {id:'groom',label:'梳毛',fields:[]},
+  {id:'weight',label:'體重',fields:[{key:'value',label:'體重(kg)',type:'number',ph:'4.2',step:'0.1'}]},
+  {id:'health',label:'狀態',fields:[{key:'mood',label:'心情',type:'select',opts:['開心','平常','冇精神','唔舒服']}]},
+  {id:'vet',label:'睇醫生',fields:[
+    {key:'reason',label:'原因',type:'select',opts:['心臟覆診','腹腔超聲波','急症','普通診症','其他']},
+    {key:'clinic',label:'診所/醫生',type:'text',ph:'例:XX獸醫'},
+    {key:'nextDate',label:'下次覆診日期',type:'date'}
+  ]},
+  {id:'bloodtest',label:'驗血',fields:[]}
+];
+const RESP_THRESHOLD = {'清醒':35,'睡覺':25};
+const BLOOD_PARAMS = [
+  {key:'glu',label:'GLU 血糖',unit:'mmol/L',ref:[3.95,8.84],group:'chem'},
+  {key:'crea',label:'CREA 肌酸酐',unit:'µmol/L',ref:[71,212],group:'chem'},
+  {key:'urea',label:'UREA 尿素',unit:'mmol/L',ref:[5.7,12.9],group:'chem'},
+  {key:'buncrea',label:'BUN/CREA',unit:'',ref:null,group:'chem'},
+  {key:'phos',label:'PHOS 磷',unit:'mmol/L',ref:[1.00,2.42],group:'chem'},
+  {key:'ca',label:'CA 鈣',unit:'mmol/L',ref:[1.95,2.83],group:'chem'},
+  {key:'tp',label:'TP 總蛋白',unit:'g/L',ref:[57,89],group:'chem'},
+  {key:'alb',label:'ALB 白蛋白',unit:'g/L',ref:[23,39],group:'chem'},
+  {key:'glob',label:'GLOB 球蛋白',unit:'g/L',ref:[28,51],group:'chem'},
+  {key:'albglob',label:'ALB/GLOB',unit:'',ref:null,group:'chem'},
+  {key:'alt',label:'ALT',unit:'U/L',ref:[12,130],group:'chem'},
+  {key:'alkp',label:'ALKP',unit:'U/L',ref:[14,111],group:'chem'},
+  {key:'ggt',label:'GGT',unit:'U/L',ref:[0,4],group:'chem'},
+  {key:'tbil',label:'TBIL 總膽紅素',unit:'µmol/L',ref:[0,15],group:'chem'},
+  {key:'chol',label:'CHOL 膽固醇',unit:'mmol/L',ref:[1.68,5.81],group:'chem'},
+  {key:'amyl',label:'AMYL 澱粉酶',unit:'U/L',ref:[500,1500],group:'chem'},
+  {key:'lipa',label:'LIPA 脂酶',unit:'U/L',ref:[100,1400],group:'chem'},
+  {key:'na',label:'Na 鈉',unit:'mmol/L',ref:[150,165],group:'chem'},
+  {key:'k',label:'K 鉀',unit:'mmol/L',ref:[3.5,5.8],group:'chem'},
+  {key:'nak',label:'Na/K',unit:'',ref:null,group:'chem'},
+  {key:'cl',label:'Cl 氯',unit:'mmol/L',ref:[112,129],group:'chem'},
+  {key:'osmcalc',label:'Osm Calc',unit:'mmol/kg',ref:null,group:'chem'},
+  {key:'rbc',label:'RBC 紅血球',unit:'x10^12/L',ref:[6.54,12.20],group:'cbc'},
+  {key:'hct',label:'HCT 血球比容',unit:'%',ref:[30.3,52.3],group:'cbc'},
+  {key:'hgb',label:'HGB 血紅蛋白',unit:'g/dL',ref:[9.8,16.2],group:'cbc'},
+  {key:'mcv',label:'MCV',unit:'fL',ref:[35.9,53.1],group:'cbc'},
+  {key:'mch',label:'MCH',unit:'pg',ref:[11.8,17.3],group:'cbc'},
+  {key:'mchc',label:'MCHC',unit:'g/dL',ref:[28.1,35.8],group:'cbc'},
+  {key:'rdw',label:'RDW',unit:'%',ref:[15.0,27.0],group:'cbc'},
+  {key:'reticpct',label:'%RETIC',unit:'%',ref:null,group:'cbc'},
+  {key:'retic',label:'RETIC',unit:'K/µL',ref:[3.0,50.0],group:'cbc'},
+  {key:'retichgb',label:'RETIC-HGB',unit:'pg',ref:[13.2,20.8],group:'cbc'},
+  {key:'wbc',label:'WBC 白血球',unit:'x10^9/L',ref:[2.87,17.02],group:'cbc'},
+  {key:'neupct',label:'%NEU',unit:'%',ref:null,group:'cbc'},
+  {key:'lympct',label:'%LYM',unit:'%',ref:null,group:'cbc'},
+  {key:'monopct',label:'%MONO',unit:'%',ref:null,group:'cbc'},
+  {key:'eospct',label:'%EOS',unit:'%',ref:null,group:'cbc'},
+  {key:'basopct',label:'%BASO',unit:'%',ref:null,group:'cbc'},
+  {key:'neu',label:'NEU',unit:'x10^9/L',ref:[2.30,10.29],group:'cbc'},
+  {key:'lym',label:'LYM',unit:'x10^9/L',ref:[0.92,6.88],group:'cbc'},
+  {key:'mono',label:'MONO',unit:'x10^9/L',ref:[0.05,0.67],group:'cbc'},
+  {key:'eos',label:'EOS',unit:'x10^9/L',ref:[0.17,1.57],group:'cbc'},
+  {key:'baso',label:'BASO',unit:'x10^9/L',ref:[0.01,0.26],group:'cbc'},
+  {key:'plt',label:'PLT 血小板',unit:'K/µL',ref:[151,600],group:'cbc'},
+  {key:'mpv',label:'MPV',unit:'fL',ref:[11.4,21.6],group:'cbc'},
+  {key:'pct',label:'PCT',unit:'%',ref:[0.17,0.86],group:'cbc'}
+];
+const CAT_COLORS = ['#C07C3E','#748569','#5B6B8C','#A85843','#8C5A28','#6B7F8F'];
+
+let cats = [];
+let entriesByCat = {};
+let activeCatId = null;
+let selectedDate = todayStr();
+let openCategory = null;
+
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function pad(n){ return n<10?'0'+n:''+n; }
+function nowTimeStr(){ const d=new Date(); return pad(d.getHours())+':'+pad(d.getMinutes()); }
+function fmtDateLabel(ds){
+  const d=new Date(ds+'T00:00:00');
+  const wd=['日','一','二','三','四','五','六'][d.getDay()];
+  return ds+'（星期'+wd+'）';
+}
+
+
+const LOCAL_KEYS_PREFIXES=['cats','entries:'];
+let store={};
+let remoteMode=false;
+let dirty=false;
+let pushTimer=null;
+let pushing=false;
+
+function setSync(text, cls){
+  const el=document.getElementById('syncState');
+  if(el){ el.textContent=text; el.className='syncstate '+(cls||''); }
+}
+function lsGet(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+function lsAllData(){
+  const out={};
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(LOCAL_KEYS_PREFIXES.some(p=>k===p||k.startsWith(p))){ out[k]=JSON.parse(localStorage.getItem(k)); }
+    }
+  }catch(e){}
+  return out;
+}
+
+const SUPABASE_URL = 'https://bmcbisvprofjscsnfrdz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_kuIJ0sj31loBn_GXMv43nw_-vyZVsg8';
+const TABLE = 'diary';
+let dirtyKeys = new Set();
+
+function sbConfigured(){ return SUPABASE_KEY && !SUPABASE_KEY.startsWith('PASTE_'); }
+function sbHeaders(extra){
+  const h = Object.assign({ 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' }, extra||{});
+  if(!SUPABASE_KEY.startsWith('sb_')) h['Authorization'] = 'Bearer ' + SUPABASE_KEY;
+  return h;
+}
+async function sbFetchAll(){
+  const r = await fetch(SUPABASE_URL + '/rest/v1/' + TABLE + '?select=key,value', { headers: sbHeaders(), cache: 'no-store' });
+  if(!r.ok) throw new Error('GET ' + r.status);
+  const rows = await r.json();
+  const out = {};
+  rows.forEach(row => { if(row.value !== null && row.value !== undefined) out[row.key] = row.value; });
+  return { out, count: rows.length };
+}
+async function sbUpsert(keys){
+  const now = new Date().toISOString();
+  const rows = keys.map(k => ({ key: k, value: (k in store) ? store[k] : null, updated_at: now }));
+  const r = await fetch(SUPABASE_URL + '/rest/v1/' + TABLE + '?on_conflict=key', {
+    method: 'POST',
+    headers: sbHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+    body: JSON.stringify(rows),
+    keepalive: JSON.stringify(rows).length < 60000
+  });
+  if(!r.ok) throw new Error('POST ' + r.status);
+}
+
+async function initStorage(){
+  if(!sbConfigured()){
+    remoteMode=false; store=lsAllData(); setSync('未設定 Supabase key，只存本機','err'); return;
+  }
+  try{
+    const { out, count } = await sbFetchAll();
+    remoteMode = true;
+    store = out;
+    if(count === 0){
+      const local = lsAllData();
+      if(local.cats && local.cats.length){
+        store = local;
+        Object.keys(local).forEach(k => dirtyKeys.add(k));
+        schedulePush(0);
+      }
+    }
+    setSync('已同步','ok');
+  }catch(e){
+    console.error(e);
+    remoteMode=false; store=lsAllData(); setSync('連唔到資料庫，只存本機','off');
+  }
+}
+
+function schedulePush(delay){
+  if(!remoteMode) return;
+  dirty=true;
+  setSync('等緊同步…','wait');
+  clearTimeout(pushTimer);
+  pushTimer=setTimeout(pushNow, delay===undefined?1500:delay);
+}
+async function pushNow(){
+  if(!remoteMode || pushing || !dirtyKeys.size) return;
+  pushing=true;
+  clearTimeout(pushTimer);
+  const keys = Array.from(dirtyKeys);
+  try{
+    dirtyKeys.clear();
+    dirty = false;
+    setSync('同步中…','wait');
+    await sbUpsert(keys);
+    setSync(dirtyKeys.size ? '等緊同步…' : '已同步', dirtyKeys.size ? 'wait' : 'ok');
+  }catch(e){
+    console.error(e);
+    keys.forEach(k => dirtyKeys.add(k));
+    dirty = true;
+    setSync('同步失敗，會再試','err');
+    pushing=false;
+    pushTimer=setTimeout(pushNow,8000);
+    return;
+  }
+  pushing=false;
+  if(dirtyKeys.size) schedulePush();
+  else dirty = false;
+}
+
+async function safeGet(key){
+  return key in store ? store[key] : null;
+}
+async function safeSet(key,val){
+  store[key]=JSON.parse(JSON.stringify(val));
+  lsSet(key,val);
+  dirtyKeys.add(key);
+  schedulePush();
+}
+async function safeDelete(key){
+  delete store[key];
+  lsDel(key);
+  dirtyKeys.add(key);
+  schedulePush();
+}
+
+async function refreshFromRemote(){
+  if(!remoteMode || dirtyKeys.size || pushing) return;
+  try{
+    const { out } = await sbFetchAll();
+    if(dirtyKeys.size || pushing) return;
+    store = out;
+    cats=(store.cats)||[];
+    cats.forEach(c=>{ c.condition=c.condition||''; c.medications=c.medications||[]; });
+    entriesByCat={};
+    if(!cats.find(c=>c.id===activeCatId)) activeCatId=cats.length?cats[0].id:null;
+    renderCatTabs();
+    if(activeCatId){ await ensureEntriesLoaded(activeCatId); }
+    render();
+    setSync('已同步','ok');
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){ if(dirtyKeys.size) pushNow(); }
+  else { refreshFromRemote(); }
+});
+window.addEventListener('pagehide',()=>{ if(dirtyKeys.size) pushNow(); });
+
+async function loadAll(){
+  await initStorage();
+  cats = (await safeGet('cats')) || [];
+  cats.forEach(c=>{ c.condition = c.condition||''; c.medications = c.medications||[]; });
+  if(cats.length){ activeCatId = cats[0].id; }
+  document.getElementById('todayLabel').textContent = fmtDateLabel(todayStr());
+  renderCatTabs();
+  if(activeCatId){ await ensureEntriesLoaded(activeCatId); }
+  render();
+}
+async function ensureEntriesLoaded(catId){
+  if(!(catId in entriesByCat)){
+    entriesByCat[catId] = (await safeGet('entries:'+catId)) || [];
+  }
+}
+
+function renderCatTabs(){
+  const wrap = document.getElementById('cattabs');
+  wrap.innerHTML = '';
+  cats.forEach(c=>{
+    const el = document.createElement('div');
+    el.className = 'cattab' + (c.id===activeCatId?' active':'');
+    el.style.setProperty('--catcolor', c.color);
+    el.innerHTML = '<span class="dot"></span><span>'+escapeHtml(c.name)+'</span><span class="delcat" title="刪除呢隻貓嘅資料">✕</span>';
+    el.onclick = async ()=>{ activeCatId = c.id; openCategory=null; await ensureEntriesLoaded(c.id); render(); };
+    el.querySelector('.delcat').onclick = (e)=>{ e.stopPropagation(); deleteCat(c); };
+    wrap.appendChild(el);
+  });
+  const add = document.createElement('div');
+  add.className = 'cattab addnew';
+  add.textContent = '+ 加隻貓';
+  add.onclick = toggleAddCatForm;
+  wrap.appendChild(add);
+}
+
+async function deleteCat(c){
+  const ok = confirm('確定要刪除「'+c.name+'」同佢所有記錄？呢個動作刪咗就冚唔返。');
+  if(!ok) return;
+  cats = cats.filter(x=>x.id!==c.id);
+  await safeSet('cats', cats);
+  await safeDelete('entries:'+c.id);
+  delete entriesByCat[c.id];
+  if(activeCatId===c.id){
+    activeCatId = cats.length ? cats[0].id : null;
+    if(activeCatId) await ensureEntriesLoaded(activeCatId);
+  }
+  renderCatTabs();
+  render();
+}
+
+function toggleAddCatForm(){
+  const area = document.getElementById('addcatArea');
+  if(area.innerHTML){ area.innerHTML=''; return; }
+  let chosen = CAT_COLORS[cats.length % CAT_COLORS.length];
+  area.innerHTML = '<div class="addcat-form">'+
+    '<input type="text" id="newCatName" placeholder="貓貓個名">'+
+    '<div class="swatches" id="swatches"></div>'+
+    '<button class="stampsubmit" style="width:auto;padding:8px 16px" id="saveCatBtn">加入</button>'+
+  '</div>';
+  const sw = document.getElementById('swatches');
+  CAT_COLORS.forEach(col=>{
+    const s = document.createElement('div');
+    s.className='swatch'+(col===chosen?' sel':'');
+    s.style.background=col;
+    s.onclick=()=>{ chosen=col; [...sw.children].forEach(c=>c.classList.remove('sel')); s.classList.add('sel'); };
+    sw.appendChild(s);
+  });
+  document.getElementById('saveCatBtn').onclick = async ()=>{
+    const name = document.getElementById('newCatName').value.trim();
+    if(!name) return;
+    const id = 'cat_'+Date.now();
+    cats.push({id,name,color:chosen,condition:'',medications:[]});
+    await safeSet('cats', cats);
+    entriesByCat[id] = [];
+    activeCatId = id;
+    area.innerHTML = '';
+    renderCatTabs();
+    render();
+  };
+}
+
+function render(){
+  const board = document.getElementById('board');
+  const noCat = document.getElementById('noCat');
+  if(!activeCatId){ board.style.display='none'; noCat.style.display='block'; return; }
+  board.style.display='block'; noCat.style.display='none';
+
+  const cat = cats.find(c=>c.id===activeCatId);
+  document.documentElement.style.setProperty('--catcolor', cat.color);
+  document.getElementById('board').style.setProperty('--catcolor', cat.color);
+  document.getElementById('dateLabel').textContent = fmtDateLabel(selectedDate);
+
+  renderHealthCard(cat);
+  renderStampGrid(cat);
+  renderStats(cat);
+  renderTimeline(cat);
+  renderAnalysis(cat);
+}
+
+function nextVetDate(cat){
+  const list = entriesByCat[cat.id]||[];
+  const dates = list.filter(e=>e.type==='vet' && e.fields.nextDate).map(e=>e.fields.nextDate);
+  const today = todayStr();
+  const future = dates.filter(d=>d>=today).sort();
+  return future.length ? future[0] : null;
+}
+
+function renderHealthCard(cat){
+  const el = document.getElementById('healthcard');
+  const todayEntries = (entriesByCat[cat.id]||[]).filter(e=>e.date===selectedDate && e.type==='med');
+  const nextVet = nextVetDate(cat);
+  let vetBanner = '';
+  if(nextVet){
+    const days = Math.round((new Date(nextVet+'T00:00:00') - new Date(todayStr()+'T00:00:00'))/86400000);
+    const daysText = days===0?'今日':(days>0?'仲有'+days+'日':'已過咗'+(days*-1)+'日');
+    vetBanner = '<div class="vetreminder">'+ICONS.vet+'<span><b>下次覆診：</b>'+nextVet+'（'+daysText+'）</span></div>';
+  }
+  const rows = (cat.medications||[]).map(m=>{
+    const given = todayEntries.filter(e=>e.fields.name===m.name).length;
+    const need = m.freq || 1;
+    let dots = '';
+    for(let i=0;i<need;i++){ dots += '<span class="meddot'+(i<given?' filled':'')+'"></span>'; }
+    return '<tr>'+
+      '<td class="medname">'+escapeHtml(m.name)+'</td>'+
+      '<td class="meddose">'+escapeHtml(m.dose)+'</td>'+
+      '<td><span class="medprogress">'+dots+'</span> <span style="color:var(--ink-soft)">'+given+'/'+need+'</span></td>'+
+      '<td><button class="med-del" data-mid="'+m.id+'">刪除</button></td>'+
+    '</tr>';
+  }).join('');
+  el.innerHTML =
+    '<div class="hc-title">健康檔案</div>'+
+    vetBanner +
+    '<div class="hc-condition"><label>病史</label><input type="text" id="conditionInput" value="'+escapeHtml(cat.condition)+'" placeholder="例:HCM 肥厚型心肌病"></div>'+
+    (cat.medications&&cat.medications.length ?
+      '<table class="medtable"><tr><th>藥物</th><th>劑量</th><th>今日進度</th><th></th></tr>'+rows+'</table>'
+      : '<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px">仲未有用藥記錄，落面加返啲藥。</div>') +
+    '<div class="addmed-form">'+
+      '<div class="fitem"><label>藥物名</label><input type="text" id="medName" placeholder="例:Furosemide"></div>'+
+      '<div class="fitem"><label>劑量</label><input type="text" id="medDose" placeholder="例:10mg 1粒"></div>'+
+      '<div class="fitem" style="max-width:90px"><label>每日次數</label><input type="number" id="medFreq" value="1" min="1"></div>'+
+      '<button class="addmed-btn" id="addMedBtn">加藥</button>'+
+    '</div>';
+
+  document.getElementById('conditionInput').onchange = async (e)=>{
+    cat.condition = e.target.value.trim();
+    await safeSet('cats', cats);
+  };
+  el.querySelectorAll('.med-del').forEach(btn=>{
+    btn.onclick = async ()=>{
+      cat.medications = cat.medications.filter(m=>m.id!==btn.dataset.mid);
+      await safeSet('cats', cats);
+      render();
+    };
+  });
+  document.getElementById('addMedBtn').onclick = async ()=>{
+    const name = document.getElementById('medName').value.trim();
+    const dose = document.getElementById('medDose').value.trim();
+    const freq = parseInt(document.getElementById('medFreq').value)||1;
+    if(!name) return;
+    cat.medications = cat.medications||[];
+    cat.medications.push({id:'med_'+Date.now(), name, dose, freq});
+    await safeSet('cats', cats);
+    render();
+  };
+}
+
+function renderStampGrid(cat){
+  const grid = document.getElementById('stampgrid');
+  grid.innerHTML = '';
+  CATEGORIES.forEach(cfg=>{
+    const btn = document.createElement('div');
+    btn.className = 'stampbtn' + (openCategory===cfg.id?' on':'');
+    btn.style.setProperty('--catcolor', cat.color);
+    btn.innerHTML = ICONS[cfg.id] + '<span>'+cfg.label+'</span>';
+    btn.onclick = ()=>{ openCategory = (openCategory===cfg.id) ? null : cfg.id; renderStampGrid(cat); renderQuickForm(cat); };
+    grid.appendChild(btn);
+  });
+}
+
+function getWeightHistory(cat){
+  return (entriesByCat[cat.id]||[])
+    .filter(e=>e.type==='weight' && e.fields.value && !isNaN(parseFloat(e.fields.value)))
+    .map(e=>({...e, value:parseFloat(e.fields.value)}))
+    .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+}
+
+function renderQuickForm(cat){
+  const area = document.getElementById('quickformArea');
+  if(!openCategory){ area.innerHTML=''; return; }
+  const cfg = CATEGORIES.find(c=>c.id===openCategory);
+
+  if(cfg.id==='med'){
+    const meds = cat.medications||[];
+    if(!meds.length){
+      area.innerHTML = '<div class="quickform" style="--catcolor:'+cat.color+'"><div style="font-size:12.5px;color:var(--ink-soft)">仲未有藥物資料，落去上面「健康檔案」加返啲藥先。</div></div>';
+      return;
+    }
+    area.innerHTML = '<div class="quickform">'+
+      '<div class="frow">'+
+        '<div class="fitem"><label>時間</label><input type="time" id="f_time" value="'+nowTimeStr()+'"></div>'+
+        '<div class="fitem"><label>藥物</label><select id="f_medId">'+
+          meds.map(m=>'<option value="'+m.id+'">'+escapeHtml(m.name)+' ('+escapeHtml(m.dose)+')</option>').join('')+
+        '</select></div>'+
+      '</div>'+
+      '<div class="frow"><div class="fitem"><label>備註（隨意）</label><textarea id="f_note" placeholder="想記低嘅其他嘢..."></textarea></div></div>'+
+      '<button class="stampsubmit" id="stampSubmitBtn">蓋章記錄</button>'+
+    '</div>';
+    area.querySelector('.quickform').style.setProperty('--catcolor', cat.color);
+    document.getElementById('stampSubmitBtn').onclick = ()=>submitEntry(cat, cfg);
+    return;
+  }
+
+  if(cfg.id==='bloodtest'){
+    const lastEntry = (entriesByCat[cat.id]||[]).filter(e=>e.type==='bloodtest')
+      .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).pop();
+    const paramRow = (p)=>{
+      const lastVal = lastEntry && lastEntry.fields[p.key] ? lastEntry.fields[p.key] : '';
+      const refText = p.ref ? p.ref[0]+'-'+p.ref[1] : '';
+      return '<div class="bitem"><label><span>'+p.label+(p.unit?' ('+p.unit+')':'')+'</span>'+(refText?'<span class="ref">'+refText+'</span>':'')+'</label>'+
+        '<input type="number" step="0.01" id="bt_'+p.key+'" placeholder="'+refText+'">'+
+        (lastVal?'<div class="lastval">上次: '+lastVal+'</div>':'')+
+      '</div>';
+    };
+    const chemHtml = BLOOD_PARAMS.filter(p=>p.group==='chem').map(paramRow).join('');
+    const cbcHtml = BLOOD_PARAMS.filter(p=>p.group==='cbc').map(paramRow).join('');
+    area.innerHTML = '<div class="quickform">'+
+      '<div class="frow"><div class="fitem"><label>時間</label><input type="time" id="f_time" value="'+nowTimeStr()+'"></div></div>'+
+      '<div class="bloodsection-title">生化 Chemistry</div>'+
+      '<div class="bloodgrid">'+chemHtml+'</div>'+
+      '<div class="bloodsection-title">血常規 CBC</div>'+
+      '<div class="bloodgrid">'+cbcHtml+'</div>'+
+      '<div class="frow"><div class="fitem"><label>備註（隨意）</label><textarea id="f_note" placeholder="其他想記低嘅嘢..."></textarea></div></div>'+
+      '<button class="stampsubmit" id="stampSubmitBtn">蓋章記錄</button>'+
+    '</div>';
+    area.querySelector('.quickform').style.setProperty('--catcolor', cat.color);
+    document.getElementById('stampSubmitBtn').onclick = ()=>submitEntry(cat, cfg);
+    return;
+  }
+
+  let fieldsHtml = '';
+  cfg.fields.forEach(f=>{
+    if(f.type==='select'){
+      fieldsHtml += '<div class="fitem"><label>'+f.label+'</label><select id="f_'+f.key+'">'+
+        f.opts.map(o=>'<option value="'+o+'">'+o+'</option>').join('')+'</select></div>';
+    } else if(f.type==='textarea'){
+      fieldsHtml += '<div class="fitem" style="flex-basis:100%"><label>'+f.label+'</label><textarea id="f_'+f.key+'" placeholder="'+(f.ph||'')+'"></textarea></div>';
+    } else {
+      fieldsHtml += '<div class="fitem"><label>'+f.label+'</label><input type="'+f.type+'" id="f_'+f.key+'" placeholder="'+(f.ph||'')+'" '+(f.step?'step="'+f.step+'"':'')+'></div>';
+    }
+  });
+  let lastWeightHtml = '';
+  if(cfg.id==='weight'){
+    const hist = getWeightHistory(cat);
+    const last = hist.length ? hist[hist.length-1] : null;
+    lastWeightHtml = last
+      ? '<div class="lastweight">上次記錄：<b>'+last.value+'kg</b>（'+last.date+' '+last.time+'）</div>'
+      : '<div class="lastweight">仲未有體重記錄，呢次會係第一筆。</div>';
+  }
+  area.innerHTML = '<div class="quickform">'+
+    lastWeightHtml +
+    '<div class="frow">'+
+      '<div class="fitem"><label>時間</label><input type="time" id="f_time" value="'+nowTimeStr()+'"></div>'+
+      fieldsHtml +
+    '</div>'+
+    '<div class="frow"><div class="fitem"><label>備註（隨意）</label><textarea id="f_note" placeholder="想記低嘅其他嘢..."></textarea></div></div>'+
+    '<button class="stampsubmit" id="stampSubmitBtn">蓋章記錄</button>'+
+  '</div>';
+  area.querySelector('.quickform').style.setProperty('--catcolor', cat.color);
+  document.getElementById('stampSubmitBtn').onclick = ()=>submitEntry(cat, cfg);
+
+  if(cfg.id==='resp'){
+    const stateEl = document.getElementById('f_state');
+    const rateEl = document.getElementById('f_rate');
+    const checkResp = ()=>{
+      const th = RESP_THRESHOLD[stateEl.value] || 35;
+      const v = parseFloat(rateEl.value);
+      if(!isNaN(v) && v>th){ rateEl.style.color='var(--brick)'; rateEl.style.fontWeight='700'; }
+      else { rateEl.style.color=''; rateEl.style.fontWeight=''; }
+    };
+    stateEl.addEventListener('change', checkResp);
+    rateEl.addEventListener('input', checkResp);
+  }
+}
+
+async function submitEntry(cat, cfg){
+  const time = document.getElementById('f_time').value || nowTimeStr();
+  const note = document.getElementById('f_note').value.trim();
+  let fields = {};
+  if(cfg.id==='med'){
+    const medId = document.getElementById('f_medId').value;
+    const med = (cat.medications||[]).find(m=>m.id===medId);
+    if(med) fields = {name:med.name, dose:med.dose};
+  } else if(cfg.id==='bloodtest'){
+    BLOOD_PARAMS.forEach(p=>{
+      const el = document.getElementById('bt_'+p.key);
+      if(el && el.value.trim()!==''){ fields[p.key] = el.value.trim(); }
+    });
+  } else {
+    cfg.fields.forEach(f=>{
+      const el = document.getElementById('f_'+f.key);
+      if(el) fields[f.key] = el.value.trim ? el.value.trim() : el.value;
+    });
+  }
+  const entry = {
+    id:'e_'+Date.now(),
+    type:cfg.id,
+    date:selectedDate,
+    time,
+    fields,
+    note
+  };
+  entriesByCat[cat.id] = entriesByCat[cat.id] || [];
+  entriesByCat[cat.id].push(entry);
+  entriesByCat[cat.id].sort((a,b)=> (a.date+a.time).localeCompare(b.date+b.time));
+  await safeSet('entries:'+cat.id, entriesByCat[cat.id]);
+  openCategory = null;
+  render();
+}
+
+function renderStats(cat){
+  const list = (entriesByCat[cat.id]||[]).filter(e=>e.date===selectedDate);
+  const feed = list.filter(e=>e.type==='feed').length;
+  const litter = list.filter(e=>e.type==='litter').length;
+  const playMin = list.filter(e=>e.type==='play').reduce((s,e)=>s+(parseInt(e.fields.duration)||0),0);
+  const medCount = list.filter(e=>e.type==='med').length;
+  const vetCount = list.filter(e=>e.type==='vet').length;
+  const bloodCount = list.filter(e=>e.type==='bloodtest').length;
+  const stats = document.getElementById('stats');
+  stats.innerHTML = '';
+  [['餵食次數',feed],['如廁次數',litter],['玩耍分鐘',playMin],['食藥次數',medCount],['睇醫生',vetCount],['驗血',bloodCount],['今日記錄',list.length]].forEach(([l,n])=>{
+    const el = document.createElement('div');
+    el.className='stat';
+    el.innerHTML = '<div class="n">'+n+'</div><div class="l">'+l+'</div>';
+    stats.appendChild(el);
+  });
+}
+
+function bloodDetailHtml(fields){
+  const items = BLOOD_PARAMS.filter(p=>fields[p.key]!==undefined && fields[p.key]!=='').map(p=>{
+    const val = parseFloat(fields[p.key]);
+    let cls='';
+    if(p.ref && !isNaN(val)){ if(val<p.ref[0]) cls='low'; else if(val>p.ref[1]) cls='high'; }
+    return '<div><span class="blabel">'+p.label.split(' ')[0]+'</span><span class="bval '+cls+'">'+fields[p.key]+'</span></div>';
+  });
+  return items.length ? '<div class="bloodresult">'+items.join('')+'</div>' : '';
+}
+
+function renderTimeline(cat){
+  const tl = document.getElementById('timeline');
+  const list = (entriesByCat[cat.id]||[]).filter(e=>e.date===selectedDate);
+  if(!list.length){
+    tl.innerHTML = '<div class="empty">呢一日仲未有記錄，撳左邊個掣蓋個章啦。</div>';
+    return;
+  }
+  const cfgMap = {}; CATEGORIES.forEach(c=>cfgMap[c.id]=c);
+  const weightHist = getWeightHistory(cat);
+  tl.innerHTML = list.map((e,idx)=>{
+    const cfg = cfgMap[e.type];
+    const tilt = (idx%2===0? -3:3) + (idx%3);
+    let detail;
+    if(e.type==='weight' && e.fields.value && !isNaN(parseFloat(e.fields.value))){
+      const val = parseFloat(e.fields.value);
+      const histIdx = weightHist.findIndex(w=>w.id===e.id);
+      const prev = histIdx>0 ? weightHist[histIdx-1] : null;
+      let diffHtml = '';
+      if(prev){
+        const diff = val - prev.value;
+        const diffAbs = Math.abs(diff).toFixed(2).replace(/\.?0+$/,'');
+        if(diff>0.005) diffHtml = ' <span class="wdiff up">▲ +'+diffAbs+'kg（上次'+prev.value+'kg）</span>';
+        else if(diff<-0.005) diffHtml = ' <span class="wdiff down">▼ -'+diffAbs+'kg（上次'+prev.value+'kg）</span>';
+        else diffHtml = ' <span class="wdiff same">→ 不變（上次'+prev.value+'kg）</span>';
+      }
+      detail = val+'kg'+diffHtml;
+    } else if(e.type==='bloodtest'){
+      detail = bloodDetailHtml(e.fields);
+    } else if(e.type==='resp'){
+      const rate = parseFloat(e.fields.rate);
+      const state = e.fields.state || '';
+      const th = RESP_THRESHOLD[state] || 35;
+      const over = !isNaN(rate) && rate>th;
+      detail = (over ? '<span class="bval high">'+escapeHtml(e.fields.rate)+'</span>' : escapeHtml(e.fields.rate||''))+
+        ' 下/分鐘 · '+escapeHtml(state)+
+        (over ? ' <span class="bval high">⚠ 超過'+th+'下</span>' : '');
+    } else {
+      const detailParts = Object.entries(e.fields).filter(([k,v])=>v).map(([k,v])=>escapeHtml(v));
+      detail = detailParts.join(' · ');
+    }
+    return '<div class="entry" style="--tilt:'+tilt+'deg">'+
+      '<div class="stampicon" style="--c:'+cat.color+'">'+ICONS[e.type]+'</div>'+
+      '<div class="entrybody">'+
+        '<div class="entrytop"><span class="entrytype">'+cfg.label+'</span><span class="entrytime">'+e.time+'</span></div>'+
+        (detail?'<div class="entrydetail">'+detail+'</div>':'')+
+        (e.note?'<div class="entrynote">「'+escapeHtml(e.note)+'」</div>':'')+
+      '</div>'+
+      '<button class="delbtn" data-id="'+e.id+'">刪除</button>'+
+    '</div>';
+  }).join('');
+  tl.querySelectorAll('.delbtn').forEach(btn=>{
+    btn.onclick = async ()=>{
+      entriesByCat[cat.id] = entriesByCat[cat.id].filter(e=>e.id!==btn.dataset.id);
+      await safeSet('entries:'+cat.id, entriesByCat[cat.id]);
+      render();
+    };
+  });
+}
+
+// ================= 走勢圖 / 統計 / 醫生報告 =================
+let currentView='record', chartRange=90, bloodParam=null, tileType=null;
+const DAY=86400000;
+const TYPE_LABEL={}; CATEGORIES.forEach(c=>TYPE_LABEL[c.id]=c.label);
+
+function tsOf(e){ return new Date(e.date+'T'+(e.time||'00:00')+':00').getTime(); }
+function fmtMD(t){ const d=new Date(t); return (d.getMonth()+1)+'/'+d.getDate(); }
+function fmtN(v){ return String(Math.round(v*100)/100); }
+function dstr(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function entriesOf(cat,type){ return (entriesByCat[cat.id]||[]).filter(e=>e.type===type).sort((a,b)=>tsOf(a)-tsOf(b)); }
+function inRange(list,days){ if(!days) return list; const from=Date.now()-days*DAY; return list.filter(e=>tsOf(e)>=from); }
+function lastNDays(n){ const out=[]; const d=new Date(); d.setHours(12,0,0,0); for(let i=n-1;i>=0;i--){ const x=new Date(d.getTime()-i*DAY); out.push(dstr(x)); } return out; }
+function bloodFlag(p,v){ if(!p.ref||isNaN(v)) return ''; return v<p.ref[0]?'lo':(v>p.ref[1]?'hi':''); }
+function bloodVal(e,key){ const v=e.fields[key]; return (v===undefined||v==='')?null:parseFloat(v); }
+function respOver(e){ const r=parseFloat(e.fields.rate); const th=RESP_THRESHOLD[e.fields.state]||35; return !isNaN(r) && r>th; }
+
+function niceStep(raw){ const p=Math.pow(10,Math.floor(Math.log10(raw))); const f=raw/p; return (f<=1?1:f<=2?2:f<=5?5:10)*p; }
+function yTicks(lo,hi,n){
+  if(hi===lo){ hi=lo+1; lo=lo-1; }
+  const step=niceStep((hi-lo)/n);
+  const a=Math.floor(lo/step+1e-9)*step, b=Math.ceil(hi/step-1e-9)*step;
+  const out=[]; for(let v=a; v<=b+step/2; v+=step) out.push(Math.round(v/step)*step);
+  return out;
+}
+
+function lineChart(o){
+  const W=o.width||600, H=o.height||200, m={l:44,r:14,t:12,b:26};
+  const pts=[]; o.series.forEach(s=>s.points.forEach(p=>pts.push(p)));
+  if(!pts.length) return '<div class="chartempty">呢個範圍未有數據</div>';
+  const ys=pts.map(p=>p.v); (o.hlines||[]).forEach(h=>ys.push(h.y)); if(o.band) ys.push(o.band[0],o.band[1]);
+  let lo=Math.min(...ys), hi=Math.max(...ys); const pv=((hi-lo)||1)*0.12; lo-=pv; hi+=pv;
+  const ticks=yTicks(lo,hi,4); lo=ticks[0]; hi=ticks[ticks.length-1];
+  let t0=o.t0!==undefined?o.t0:Math.min(...pts.map(p=>p.t)), t1=o.t1!==undefined?o.t1:Math.max(...pts.map(p=>p.t));
+  if(t1===t0){ t0-=DAY*3; t1+=DAY*3; }
+  const X=t=>m.l+(t-t0)/(t1-t0)*(W-m.l-m.r), Y=v=>m.t+(1-(v-lo)/(hi-lo))*(H-m.t-m.b);
+  let g='';
+  ticks.forEach(v=>{ g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${m.l-6}" y="${Y(v)+3.5}" text-anchor="end">${fmtN(v)}</text>`; });
+  for(let i=0;i<=4;i++){ const t=t0+(t1-t0)*i/4; g+=`<text x="${X(t)}" y="${H-8}" text-anchor="${i===0?'start':(i===4?'end':'middle')}">${fmtMD(t)}</text>`; }
+  if(o.band){ const yb1=Y(Math.min(o.band[1],hi)), yb2=Y(Math.max(o.band[0],lo)); g+=`<rect x="${m.l}" y="${yb1}" width="${W-m.l-m.r}" height="${Math.max(0,yb2-yb1)}" fill="rgba(116,133,105,.20)"/><text x="${W-m.r-3}" y="${yb1+11}" text-anchor="end" style="fill:var(--moss)">參考範圍 ${fmtN(o.band[0])}–${fmtN(o.band[1])}</text>`; }
+  (o.hlines||[]).forEach(h=>{ g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(h.y)}" y2="${Y(h.y)}" stroke="var(--brick)" stroke-width="1.2" stroke-dasharray="5 4"/><text x="${W-m.r-3}" y="${Y(h.y)-4}" text-anchor="end" style="fill:var(--brick)">${h.label}</text>`; });
+  o.series.forEach(s=>{
+    const sp=s.points.slice().sort((a,b)=>a.t-b.t);
+    if(sp.length>1){ g+=`<polyline fill="none" stroke="${s.color}" stroke-width="2" ${s.dashed?'stroke-dasharray="2 3"':''} stroke-linejoin="round" points="${sp.map(p=>X(p.t).toFixed(1)+','+Y(p.v).toFixed(1)).join(' ')}"/>`; }
+    sp.forEach(p=>{ g+=`<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="${p.flag?4.5:3.5}" fill="${p.flag?'var(--brick)':s.color}" stroke="var(--card)" stroke-width="1"><title>${escapeHtml(p.tip||'')}</title></circle>`; });
+  });
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(o.aria||'走勢圖')}">${g}</svg>`;
+}
+
+function barChart(o){
+  const W=o.width||600, H=o.height||140, m={l:34,r:8,t:10,b:22};
+  const n=o.data.length; if(!n) return '<div class="chartempty">未有數據</div>';
+  let mx=Math.max(...o.data.map(d=>d.value),o.minMax||1);
+  const ticks=yTicks(0,mx,3); mx=ticks[ticks.length-1];
+  const bw=(W-m.l-m.r)/n, Y=v=>m.t+(1-v/mx)*(H-m.t-m.b);
+  let g='';
+  ticks.forEach(v=>{ g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${m.l-5}" y="${Y(v)+3.5}" text-anchor="end">${fmtN(v)}</text>`; });
+  const every=Math.ceil(n/7);
+  o.data.forEach((d,i)=>{
+    const x=m.l+i*bw+bw*0.15, w=bw*0.7, y=Y(d.value);
+    g+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,(H-m.b)-y).toFixed(1)}" rx="1.5" fill="${o.color}"><title>${escapeHtml(d.label+'：'+fmtN(d.value)+(o.unit||''))}</title></rect>`;
+    if(i%every===0||i===n-1){ const mm=d.label.split('-'); g+=`<text x="${(m.l+i*bw+bw/2).toFixed(1)}" y="${H-6}" text-anchor="middle">${+mm[1]}/${+mm[2]}</text>`; }
+  });
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(o.aria||'統計圖')}">${g}</svg>`;
+}
+
+function setView(v){ currentView=v; render(); window.scrollTo({top:0}); }
+function applyView(){
+  document.getElementById('viewRecord').hidden = currentView!=='record';
+  document.getElementById('viewCharts').hidden = currentView!=='charts';
+  document.getElementById('viewReport').hidden = currentView!=='report';
+  document.querySelectorAll('#viewtabs button').forEach(b=>b.classList.toggle('active', b.dataset.view===currentView));
+}
+function renderAnalysis(cat){
+  applyView();
+  if(currentView==='charts') renderCharts(cat);
+  else if(currentView==='report') renderReport(cat);
+}
+
+function weightSeries(cat,days,color){
+  const list=inRange(entriesOf(cat,'weight'),days).filter(e=>!isNaN(parseFloat(e.fields.value)));
+  return { list, series:[{name:'體重',color,points:list.map(e=>({t:tsOf(e),v:parseFloat(e.fields.value),tip:e.date+' '+fmtN(parseFloat(e.fields.value))+'kg'}))}] };
+}
+function respSeries(cat,days,color){
+  const list=inRange(entriesOf(cat,'resp'),days).filter(e=>!isNaN(parseFloat(e.fields.rate)));
+  const mk=(state,col,dashed)=>({name:state,color:col,dashed,points:list.filter(e=>e.fields.state===state).map(e=>({t:tsOf(e),v:parseFloat(e.fields.rate),flag:respOver(e),tip:e.date+' '+e.time+' '+state+' '+e.fields.rate+' 下/分鐘'+(respOver(e)?'（超標）':'')}))});
+  return { list, series:[mk('清醒',color,false), mk('睡覺','var(--clinical)',true)] };
+}
+function respStats(list){
+  const over=list.filter(respOver).length;
+  const avg=st=>{ const a=list.filter(e=>e.fields.state===st).map(e=>parseFloat(e.fields.rate)); return a.length?a.reduce((x,y)=>x+y,0)/a.length:null; };
+  return { over, total:list.length, avgAwake:avg('清醒'), avgSleep:avg('睡覺') };
+}
+function dailyCounts(cat,days){
+  const ds=lastNDays(days), all=entriesByCat[cat.id]||[];
+  const meds=cat.medications||[]; const expected=meds.reduce((s,m)=>s+(m.freq||1),0);
+  const by=(type)=>ds.map(d=>({label:d,value:all.filter(e=>e.type===type&&e.date===d).length}));
+  return {
+    ds,
+    feed:by('feed'), litter:by('litter'),
+    play:ds.map(d=>({label:d,value:all.filter(e=>e.type==='play'&&e.date===d).reduce((s,e)=>s+(parseInt(e.fields.duration)||0),0)})),
+    med: expected? ds.map(d=>{ let given=0; meds.forEach(m=>{ given+=Math.min(m.freq||1, all.filter(e=>e.type==='med'&&e.date===d&&e.fields.name===m.name).length); }); return {label:d,value:Math.round(given/expected*100)}; }) : null
+  };
+}
+
+function renderCharts(cat){
+  const el=document.getElementById('viewCharts');
+  const W=Math.max(260,Math.min(el.clientWidth-62,760));
+  const col=cat.color;
+  const rb=[[30,'30 日'],[90,'90 日'],[0,'全部']].map(([d,l])=>`<button data-range="${d}" class="${chartRange===d?'on':''}">${l}</button>`).join('');
+
+  const w=weightSeries(cat,chartRange,col);
+  let wChips='';
+  if(w.list.length){ const f=parseFloat(w.list[0].fields.value), l=parseFloat(w.list[w.list.length-1].fields.value), d=l-f;
+    wChips=`<div class="chips"><span>最新 <b>${fmtN(l)} kg</b></span>${w.list.length>1?`<span>範圍內變化 <b class="${d>0.005?'bad':(d<-0.005?'good':'')}">${d>0.005?'▲ +':(d<-0.005?'▼ ':'→ ')}${d<-0.005?fmtN(d):(d>0.005?fmtN(d):'0')} kg</b></span>`:''}<span>共 <b>${w.list.length}</b> 次</span></div>`; }
+  const weightCard=`<div class="ccard"><h3>體重</h3>${wChips}${lineChart({series:w.series,width:W,aria:'體重走勢圖'})}</div>`;
+
+  const r=respSeries(cat,chartRange,col), rs=respStats(r.list);
+  const rChips=r.list.length?`<div class="chips"><span>最近 <b class="${respOver(r.list[r.list.length-1])?'bad':''}">${r.list[r.list.length-1].fields.rate} 下</b>（${r.list[r.list.length-1].fields.state}）</span><span>超標 <b class="${rs.over?'bad':''}">${rs.over}/${rs.total}</b></span>${rs.avgAwake!==null?`<span>清醒平均 <b>${fmtN(rs.avgAwake)}</b></span>`:''}${rs.avgSleep!==null?`<span>睡覺平均 <b>${fmtN(rs.avgSleep)}</b></span>`:''}</div>`:'';
+  const respCard=`<div class="ccard"><h3>呼吸（每分鐘）</h3>${rChips}<div class="legend"><span><i style="background:${col}"></i>清醒</span><span><i style="background:var(--clinical)"></i>睡覺</span><span><i style="background:var(--brick)"></i>超標</span></div>${lineChart({series:r.series,hlines:[{y:35,label:'清醒 35'},{y:25,label:'睡覺 25'}],width:W,height:220,aria:'呼吸走勢圖'})}</div>`;
+
+  const tests=entriesOf(cat,'bloodtest');
+  const avail=BLOOD_PARAMS.filter(p=>tests.some(e=>bloodVal(e,p.key)!==null));
+  if(!bloodParam || !avail.find(p=>p.key===bloodParam)) bloodParam=avail.length?(avail.find(p=>p.key==='crea')||avail[0]).key:null;
+  let bloodCard='<div class="ccard"><h3>驗血</h3><div class="chartempty">未有驗血記錄</div></div>';
+  if(bloodParam){
+    const p=BLOOD_PARAMS.find(x=>x.key===bloodParam);
+    const list=inRange(tests,chartRange).filter(e=>bloodVal(e,p.key)!==null);
+    const all=tests.filter(e=>bloodVal(e,p.key)!==null);
+    const last=all[all.length-1], lv=bloodVal(last,p.key), fl=bloodFlag(p,lv);
+    const prev=all.length>1?all[all.length-2]:null;
+    const chips=`<div class="chips"><span>最新 <b class="${fl==='hi'?'bad':''}" style="${fl==='lo'?'color:var(--clinical)':''}">${fmtN(lv)} ${p.unit}</b>（${last.date}）${fl?(fl==='hi'?' 偏高':' 偏低'):''}</span>${prev?`<span>上次 <b>${fmtN(bloodVal(prev,p.key))}</b>（${prev.date}）</span>`:''}</div>`;
+    const sel=`<select id="bloodSel" style="max-width:260px;margin-bottom:8px">${avail.map(x=>`<option value="${x.key}" ${x.key===bloodParam?'selected':''}>${escapeHtml(x.label)}（${tests.filter(e=>bloodVal(e,x.key)!==null).length}）</option>`).join('')}</select>`;
+    const ser=[{name:p.label,color:col,points:list.map(e=>{ const v=bloodVal(e,p.key); return {t:tsOf(e),v,flag:!!bloodFlag(p,v),tip:e.date+' '+fmtN(v)+' '+p.unit}; })}];
+    bloodCard=`<div class="ccard"><h3>驗血</h3>${sel}${chips}${lineChart({series:ser,band:p.ref,width:W,aria:p.label+'走勢圖'})}</div>`;
+  }
+
+  const inr=(list)=>inRange(list,chartRange);
+  const all=entriesByCat[cat.id]||[]; const rng=inr(all);
+  const cnt=t=>rng.filter(e=>e.type===t).length;
+  const tdef=[['feed','餵食'],['water','飲水'],['litter','如廁'],['play','玩耍'],['med','食藥'],['resp','呼吸'],['weight','體重'],['vet','睇醫生'],['bloodtest','驗血']];
+  const tiles=tdef.map(([t,l])=>`<button type="button" class="tile ${tileType===t?'sel':''}" data-tile="${t}"><div class="n">${cnt(t)}</div><div class="l">${l}</div></button>`).join('');
+  let tileList='';
+  if(tileType){
+    const rows=(entriesByCat[cat.id]||[]).filter(e=>e.type===tileType).sort((x,y)=>tsOf(y)-tsOf(x)).slice(0,10);
+    const lbl=(tdef.find(x=>x[0]===tileType)||[,''])[1];
+    tileList=`<div class="tilelist"><h4>${lbl} · 最近 ${rows.length} 次</h4>`+(rows.length?rows.map(e=>{const d=new Date(e.date+'T00:00:00');const sm=entrySummary(e);return `<div class="trow"><span class="td">${d.getMonth()+1}月${d.getDate()}日 ${escapeHtml(e.time||'')}</span><span>${escapeHtml(sm)}${e.note?` <span class="tn">(${escapeHtml(e.note)})</span>`:''}</span></div>`;}).join(''):'<div class="chartempty">未有記錄</div>')+`</div>`;
+  }
+  el.innerHTML=`<div class="rangebar"><span>範圍</span>${rb}</div>${weightCard}${respCard}${bloodCard}`+
+    `<div class="ccard"><h3>記錄總數（${chartRange?('最近 '+chartRange+' 日'):'全部'}）<span style="font-weight:400;font-size:11px;color:var(--ink-soft)"> 撳一項睇最近 10 次</span></h3><div class="tilegrid" style="margin:0">${tiles}</div>${tileList}</div>`;
+  el.querySelectorAll('[data-tile]').forEach(b=>b.onclick=()=>{ tileType=(tileType===b.dataset.tile?null:b.dataset.tile); renderCharts(cat); });
+  el.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{ chartRange=parseInt(b.dataset.range); renderCharts(cat); });
+  const sel=el.querySelector('#bloodSel'); if(sel) sel.onchange=()=>{ bloodParam=sel.value; renderCharts(cat); };
+}
+
+function csvEscape(v){ v=String(v==null?'':v); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+function entrySummary(e){
+  if(e.type==='bloodtest') return BLOOD_PARAMS.filter(p=>e.fields[p.key]!==undefined&&e.fields[p.key]!=='').map(p=>p.label.split(' ')[0]+'='+e.fields[p.key]).join('; ');
+  if(e.type==='weight') return (e.fields.value||'')+' kg';
+  if(e.type==='resp') return (e.fields.state||'')+' '+(e.fields.rate||'')+' 下/分鐘';
+  if(e.type==='med') return (e.fields.name||'')+' '+(e.fields.dose||'');
+  return Object.values(e.fields||{}).filter(Boolean).join(' · ');
+}
+function downloadCSV(cat){
+  const rows=[['日期','時間','類型','內容','備註']];
+  (entriesByCat[cat.id]||[]).slice().sort((a,b)=>tsOf(a)-tsOf(b)).forEach(e=>rows.push([e.date,e.time,TYPE_LABEL[e.type]||e.type,entrySummary(e),e.note||'']));
+  const csv='﻿'+rows.map(r=>r.map(csvEscape).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='貓貓日記_'+cat.name+'_'+todayStr()+'.csv';
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500);
+}
+
+function renderReport(cat){
+  const el=document.getElementById('viewReport');
+  const W=Math.max(260,Math.min(el.clientWidth-8,700));
+  const col=cat.color;
+  const w=weightSeries(cat,180,col), wl=w.list;
+  const r=respSeries(cat,30,col), rl=r.list, rs=respStats(rl);
+  const tests=entriesOf(cat,'bloodtest');
+  const L=tests.length?tests[tests.length-1]:null, P=tests.length>1?tests[tests.length-2]:null;
+  const meds=cat.medications||[];
+  const vets=entriesOf(cat,'vet').slice(-5).reverse();
+  const nv=nextVetDate(cat);
+  const dc=dailyCounts(cat,7);
+  const adh=dc.med?Math.round(dc.med.reduce((s,d)=>s+d.value,0)/dc.med.length):null;
+
+  let html=`<div class="ractions noprint"><button id="btnPrint">列印 / 存成 PDF</button></div>`;
+  html+=`<div class="rhead"><h2>${escapeHtml(cat.name)} — 健康摘要</h2><div class="rmeta">產生日期 ${todayStr()} · 家居記錄，供獸醫參考，並非診斷${nv?` · 下次覆診 ${nv}`:''}</div></div>`;
+
+  html+=`<div class="rsec"><h3>病史</h3><div style="font-size:13px">${cat.condition?escapeHtml(cat.condition):'（未填寫）'}</div></div>`;
+
+  html+=`<div class="rsec"><h3>現時藥物${adh!==null?`（最近 7 日完成率 ${adh}%）`:''}</h3>`+(meds.length?`<table class="rtable"><tr><th>藥物</th><th>劑量</th><th>每日次數</th></tr>${meds.map(m=>`<tr><td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.dose||'')}</td><td>${m.freq||1}</td></tr>`).join('')}</table>`:'<div style="font-size:12.5px;color:var(--ink-soft)">未有藥物記錄</div>')+`</div>`;
+
+  let wTable='';
+  if(wl.length){ wTable=`<table class="rtable"><tr><th>日期</th><th>體重 (kg)</th><th>與上次相比</th></tr>${wl.slice(-6).reverse().map((e,i,arr)=>{ const idx=wl.indexOf(e); const prev=idx>0?parseFloat(wl[idx-1].fields.value):null; const v=parseFloat(e.fields.value); const d=prev===null?'':(v-prev); return `<tr><td>${e.date}</td><td>${fmtN(v)}</td><td>${d===''?'—':(Math.abs(d)<0.005?'不變':(d>0?'▲ +':'▼ ')+fmtN(d)+' kg')}</td></tr>`; }).join('')}</table>`; }
+  html+=`<div class="rsec"><h3>體重（最近 180 日）</h3>${lineChart({series:w.series,width:W,height:170,aria:'體重走勢圖'})}${wTable}</div>`;
+
+  html+=`<div class="rsec"><h3>呼吸（最近 30 日，清醒 &gt; 35、睡覺 &gt; 25 視為超標）</h3>`+
+    (rl.length?`<div class="chips"><span>超標 <b class="${rs.over?'bad':''}">${rs.over}/${rs.total}</b></span>${rs.avgAwake!==null?`<span>清醒平均 <b>${fmtN(rs.avgAwake)}</b></span>`:''}${rs.avgSleep!==null?`<span>睡覺平均 <b>${fmtN(rs.avgSleep)}</b></span>`:''}</div>`:'')+
+    `${lineChart({series:r.series,hlines:[{y:35,label:'清醒 35'},{y:25,label:'睡覺 25'}],width:W,height:190,aria:'呼吸走勢圖'})}`+
+    (rl.length?`<table class="rtable"><tr><th>日期時間</th><th>狀態</th><th>每分鐘</th></tr>${rl.slice(-10).reverse().map(e=>`<tr><td>${e.date} ${e.time}</td><td>${escapeHtml(e.fields.state||'')}</td><td class="${respOver(e)?'hi':''}">${escapeHtml(e.fields.rate)}${respOver(e)?' ⚠':''}</td></tr>`).join('')}</table>`:'')+`</div>`;
+
+  if(L){
+    const rowsB=BLOOD_PARAMS.filter(p=>bloodVal(L,p.key)!==null).map(p=>{
+      const v=bloodVal(L,p.key), f=bloodFlag(p,v), pv=P?bloodVal(P,p.key):null;
+      let ch='—'; if(pv!==null){ const d=v-pv; ch=Math.abs(d)<1e-9?'不變':(d>0?'▲ +':'▼ ')+fmtN(d); }
+      return `<tr><td>${escapeHtml(p.label)}</td><td class="${f}">${fmtN(v)}${f?(f==='hi'?' 偏高':' 偏低'):''}</td><td>${escapeHtml(p.unit)}</td><td>${p.ref?fmtN(p.ref[0])+' – '+fmtN(p.ref[1]):''}</td><td>${pv!==null?fmtN(pv):'—'}</td><td>${ch}</td></tr>`;
+    }).join('');
+    html+=`<div class="rsec"><h3>最近一次驗血（${L.date}${P?`，對比 ${P.date}`:''}）</h3><table class="rtable"><tr><th>項目</th><th>結果</th><th>單位</th><th>參考範圍</th><th>上次</th><th>變化</th></tr>${rowsB}</table></div>`;
+  } else html+=`<div class="rsec"><h3>驗血</h3><div style="font-size:12.5px;color:var(--ink-soft)">未有驗血記錄</div></div>`;
+
+  html+=`<div class="rsec"><h3>睇醫生記錄</h3>`+(vets.length?`<table class="rtable"><tr><th>日期</th><th>原因</th><th>診所 / 醫生</th><th>下次覆診</th></tr>${vets.map(e=>`<tr><td>${e.date}</td><td>${escapeHtml(e.fields.reason||'')}</td><td>${escapeHtml(e.fields.clinic||'')}</td><td>${escapeHtml(e.fields.nextDate||'')}</td></tr>`).join('')}</table>`:'<div style="font-size:12.5px;color:var(--ink-soft)">未有記錄</div>')+`</div>`;
+
+  const notes=inRange((entriesByCat[cat.id]||[]).filter(e=>e.note),30).sort((a,b)=>tsOf(b)-tsOf(a)).slice(0,10);
+  if(notes.length) html+=`<div class="rsec"><h3>近期備註（最近 30 日）</h3><table class="rtable"><tr><th>日期</th><th>類型</th><th>備註</th></tr>${notes.map(e=>`<tr><td>${e.date} ${e.time}</td><td>${escapeHtml(TYPE_LABEL[e.type]||'')}</td><td>${escapeHtml(e.note)}</td></tr>`).join('')}</table></div>`;
+
+  html+=`<div class="rnote">由「貓貓日記」產生。數值以飼主輸入為準，參考範圍取自所用化驗儀器報告。</div>`;
+  el.innerHTML=html;
+  document.getElementById('btnPrint').onclick=()=>window.print();
+}
+
+document.getElementById('viewtabs').addEventListener('click',ev=>{ const b=ev.target.closest('button[data-view]'); if(b) setView(b.dataset.view); });
+let resizeT=null;
+window.addEventListener('resize',()=>{ clearTimeout(resizeT); resizeT=setTimeout(()=>{ if(currentView!=='record' && activeCatId) render(); },250); });
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function shiftDate(days){
+  const d = new Date(selectedDate+'T00:00:00');
+  d.setDate(d.getDate()+days);
+  selectedDate = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  render();
+}
+document.getElementById('prevDay').onclick = ()=>shiftDate(-1);
+document.getElementById('nextDay').onclick = ()=>shiftDate(1);
+document.getElementById('todayBtn').onclick = ()=>{ selectedDate = todayStr(); render(); };
+
+loadAll();
+</script>
+</body>
+</html>
