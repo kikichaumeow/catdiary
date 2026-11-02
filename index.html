@@ -272,6 +272,19 @@
     #viewReport{padding:0;display:block !important;}
     .rsec{break-inside:avoid;}
   }
+  #pixcat{position:fixed;right:8px;bottom:0;z-index:30;display:flex;flex-direction:column;align-items:flex-end;pointer-events:none;}
+  #pixcat .pcbody{pointer-events:auto;cursor:pointer;border:none;background:none;padding:0;width:84px;height:84px;-webkit-tap-highlight-color:transparent;}
+  #pixcat svg{width:100%;height:100%;display:block;image-rendering:pixelated;}
+  #pixcat .pcbubble{pointer-events:auto;background:var(--card);border:2px solid var(--ink);border-radius:6px;padding:5px 9px;margin:0 6px 4px 0;font-size:12px;color:var(--ink);max-width:190px;position:relative;box-shadow:2px 2px 0 var(--ink);}
+  #pixcat .pcbubble.sad{border-color:var(--brick);box-shadow:2px 2px 0 var(--brick);color:var(--brick);}
+  #pixcat .pcbubble[hidden]{display:none;}
+  #pixcat.happy .pcbody{animation:pcbob 1.4s steps(2,end) infinite;}
+  #pixcat.sad .pcbody{animation:pcsway 2.4s steps(2,end) infinite;}
+  @keyframes pcbob{50%{transform:translateY(-4px);}}
+  @keyframes pcsway{50%{transform:translateY(2px);}}
+  @media (prefers-reduced-motion:reduce){#pixcat .pcbody{animation:none !important;}}
+  body{padding-bottom:96px;}
+  @media print{#pixcat{display:none !important;}}
   @media(max-width:640px){
     .grid{grid-template-columns:1fr;}
     .panel.stamps{border-right:none;border-bottom:1px solid var(--line);}
@@ -330,6 +343,7 @@
   <div class="empty" id="noCat" style="display:none">仲未有貓貓資料 —— 撳上面「+ 加隻貓」開始記錄啦。</div>
 </div>
 
+<div id="pixcat" class="noprint" hidden></div>
 <script>
 const ICONS = {
   feed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11a8 8 0 0 0 16 0Z"/><path d="M4 11h16"/><path d="M8 11c0-3 1-6 4-6s4 3 4 6"/></svg>',
@@ -664,7 +678,7 @@ function toggleAddCatForm(){
 function render(){
   const board = document.getElementById('board');
   const noCat = document.getElementById('noCat');
-  if(!activeCatId){ board.style.display='none'; noCat.style.display='block'; return; }
+  if(!activeCatId){ board.style.display='none'; noCat.style.display='block'; const pc=document.getElementById('pixcat'); if(pc) pc.hidden=true; return; }
   board.style.display='block'; noCat.style.display='none';
 
   const cat = cats.find(c=>c.id===activeCatId);
@@ -677,6 +691,7 @@ function render(){
   renderStats(cat);
   renderTimeline(cat);
   renderAnalysis(cat);
+  updatePixCat(cat);
 }
 
 function nextVetDate(cat){
@@ -1210,6 +1225,72 @@ function renderReport(cat){
 document.getElementById('viewtabs').addEventListener('click',ev=>{ const b=ev.target.closest('button[data-view]'); if(b) setView(b.dataset.view); });
 let resizeT=null;
 window.addEventListener('resize',()=>{ clearTimeout(resizeT); resizeT=setTimeout(()=>{ if(currentView!=='record' && activeCatId) render(); },250); });
+
+// ================= 像素貓(角落) =================
+const PIX_PAL={o:'#5a4636',t:'#d8b48c',c:'#f4e4d0',w:'#fffaf2',e:'#3b4d70',h:'#ffffff',n:'#e48e9c',p:'#f2a9b4',m:'#5a4636',b:'#8fc3ea',r:'#d4513f',g:'#7c7c8a',y:'#f2c14e'};
+const PIX_BASE=[
+'................',
+'..oo........oo..',
+'.opto......otpo.',
+'.ottooooooootto.',
+'.otttccccccttto.',
+'.occcccccccccco.',
+'.occcccccccccco.',
+'.occcccccccccco.',
+'.occccccnnccccco',
+'.occcccccccccco.',
+'..owwwwwwwwwwo..',
+'.owwwwwwwwwwwwo.',
+'.owwwcwwwwcwwwo.',
+'.owwwwwwwwwwwwoo',
+'.owwoowwwwoowwo.',
+'..oooooooooooo..'
+];
+function pixGrid(mood){
+  const g=PIX_BASE.map(r=>r.split(''));
+  const set=(x,y,ch)=>{ g[y][x]=ch; };
+  if(mood==='happy'){
+    [[4,6],[5,6],[4,7],[5,7],[10,6],[11,6],[10,7],[11,7]].forEach(([x,y])=>set(x,y,'e'));
+    set(4,6,'h'); set(10,6,'h');
+    set(3,8,'p'); set(12,8,'p');
+    set(6,9,'m'); set(9,9,'m'); set(7,10,'m'); set(8,10,'m');
+  } else {
+    // 愁眉苦臉
+    set(4,5,'o'); set(5,5,'o'); set(10,5,'o'); set(11,5,'o');
+    set(3,5,'c'); set(12,5,'c');
+    [[4,7],[5,7],[10,7],[11,7]].forEach(([x,y])=>set(x,y,'e'));
+    set(4,6,'e'); set(11,6,'e');
+    set(4,8,'b'); set(4,9,'b'); set(11,8,'b');
+    set(6,10,'m'); set(9,10,'m'); set(7,9,'m'); set(8,9,'m');
+    // 細烏雲
+    set(1,0,'g'); set(2,0,'g'); set(3,0,'g'); set(2,1,'g'); set(1,1,'g'); set(0,1,'g');
+  }
+  return g;
+}
+function pixSvg(mood){
+  const g=pixGrid(mood); let r='';
+  g.forEach((row,y)=>row.forEach((ch,x)=>{ if(ch!=='.' && PIX_PAL[ch]) r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${PIX_PAL[ch]}"/>`; }));
+  return `<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
+}
+let pixHidden=false, pixLast='';
+function medStatus(cat){
+  const meds=cat.medications||[]; const expected=meds.reduce((s,m)=>s+(m.freq||1),0);
+  const t=todayStr(); const all=entriesByCat[cat.id]||[];
+  let given=0; meds.forEach(m=>{ given+=Math.min(m.freq||1, all.filter(e=>e.type==='med'&&e.date===t&&e.fields.name===m.name).length); });
+  return {expected,given};
+}
+function updatePixCat(cat){
+  const el=document.getElementById('pixcat'); if(!el) return;
+  if(!cat){ el.hidden=true; return; }
+  const st=medStatus(cat); const left=st.expected-st.given;
+  const mood=(st.expected>0 && left>0)?'sad':'happy';
+  const msg= mood==='sad' ? `${cat.name}:仲有 ${left} 次藥未食…` : (st.expected>0 ? `${cat.name}:食哂藥喇,少少開心 ♥` : `${cat.name}:喵~`);
+  const key=cat.id+'|'+mood+'|'+msg+'|'+pixHidden;
+  el.hidden=false; el.className=mood+' noprint';
+  if(key===pixLast) return; pixLast=key;
+  el.innerHTML=`<div class="pcbubble ${mood}" ${pixHidden?'hidden':''}>${escapeHtml(msg)}</div><button class="pcbody" type="button" aria-label="${escapeHtml(msg)}">${pixSvg(mood)}</button>`;
+  el.querySelector('.pcbody').onclick=()=>{ pixHidden=!pixHidden; pixLast=''; updatePixCat(cat); };
+}
 
 function escapeHtml(s){
   return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
