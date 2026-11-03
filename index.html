@@ -247,6 +247,17 @@
   .trow{display:flex;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;}
   .trow .td{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);min-width:96px;}
   .trow .tn{color:var(--ink-soft);}
+  .prntag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;background:var(--paper);border:1px dashed var(--ink-soft);color:var(--ink-soft);}
+  .med-prn{margin-right:4px;}
+  .prnchk{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:5px;flex-basis:100%;}
+  .medlist{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+  .medrow{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);}
+  .medrow.done{opacity:.65;}
+  .mrinfo{flex:1;min-width:0;}
+  .mrname{font-size:14px;font-weight:600;}
+  .mrsub{font-size:11.5px;color:var(--ink-soft);}
+  .medtake{padding:9px 16px;border:none;border-radius:6px;background:var(--catcolor,var(--tabby));color:#fff;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;}
+  .medrow.done .medtake{background:var(--paper-2);color:var(--ink);border:1px solid var(--line-strong);font-weight:400;}
   .tile .n{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;}
   .tile .l{font-size:11px;color:var(--ink-soft);}
   .barsgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;}
@@ -702,6 +713,7 @@ function nextVetDate(cat){
   return future.length ? future[0] : null;
 }
 
+function regularMeds(cat){ return (cat.medications||[]).filter(m=>!m.prn); }
 function renderHealthCard(cat){
   const el = document.getElementById('healthcard');
   const todayEntries = (entriesByCat[cat.id]||[]).filter(e=>e.date===selectedDate && e.type==='med');
@@ -717,11 +729,14 @@ function renderHealthCard(cat){
     const need = m.freq || 1;
     let dots = '';
     for(let i=0;i<need;i++){ dots += '<span class="meddot'+(i<given?' filled':'')+'"></span>'; }
+    const prog = m.prn
+      ? '<span class="prntag">有需要先食</span> <span style="color:var(--ink-soft)">今日 '+given+' 次</span>'
+      : '<span class="medprogress">'+dots+'</span> <span style="color:var(--ink-soft)">'+given+'/'+need+'</span>';
     return '<tr>'+
       '<td class="medname">'+escapeHtml(m.name)+'</td>'+
       '<td class="meddose">'+escapeHtml(m.dose)+'</td>'+
-      '<td><span class="medprogress">'+dots+'</span> <span style="color:var(--ink-soft)">'+given+'/'+need+'</span></td>'+
-      '<td><button class="med-del" data-mid="'+m.id+'">刪除</button></td>'+
+      '<td>'+prog+'</td>'+
+      '<td style="white-space:nowrap"><button class="med-del med-prn" data-mid="'+m.id+'">'+(m.prn?'改為恆常':'改為有需要先食')+'</button> <button class="med-del" data-mid="'+m.id+'">刪除</button></td>'+
     '</tr>';
   }).join('');
   el.innerHTML =
@@ -735,6 +750,7 @@ function renderHealthCard(cat){
       '<div class="fitem"><label>藥物名</label><input type="text" id="medName" placeholder="例:Furosemide"></div>'+
       '<div class="fitem"><label>劑量</label><input type="text" id="medDose" placeholder="例:10mg 1粒"></div>'+
       '<div class="fitem" style="max-width:90px"><label>每日次數</label><input type="number" id="medFreq" value="1" min="1"></div>'+
+      '<label class="prnchk"><input type="checkbox" id="medPrn"> 有需要先食（唔計入每日完成）</label>'+
       '<button class="addmed-btn" id="addMedBtn">加藥</button>'+
     '</div>';
 
@@ -742,7 +758,15 @@ function renderHealthCard(cat){
     cat.condition = e.target.value.trim();
     await safeSet('cats', cats);
   };
-  el.querySelectorAll('.med-del').forEach(btn=>{
+  el.querySelectorAll('.med-prn').forEach(btn=>{
+    btn.onclick = async ()=>{
+      const m=(cat.medications||[]).find(x=>x.id===btn.dataset.mid); if(!m) return;
+      m.prn=!m.prn;
+      await safeSet('cats', cats);
+      render();
+    };
+  });
+  el.querySelectorAll('.med-del:not(.med-prn)').forEach(btn=>{
     btn.onclick = async ()=>{
       cat.medications = cat.medications.filter(m=>m.id!==btn.dataset.mid);
       await safeSet('cats', cats);
@@ -755,7 +779,7 @@ function renderHealthCard(cat){
     const freq = parseInt(document.getElementById('medFreq').value)||1;
     if(!name) return;
     cat.medications = cat.medications||[];
-    cat.medications.push({id:'med_'+Date.now(), name, dose, freq});
+    cat.medications.push({id:'med_'+Date.now(), name, dose, freq, prn:!!document.getElementById('medPrn').checked});
     await safeSet('cats', cats);
     render();
   };
@@ -792,18 +816,36 @@ function renderQuickForm(cat){
       area.innerHTML = '<div class="quickform" style="--catcolor:'+cat.color+'"><div style="font-size:12.5px;color:var(--ink-soft)">仲未有藥物資料，落去上面「健康檔案」加返啲藥先。</div></div>';
       return;
     }
+    const todayMed=(entriesByCat[cat.id]||[]).filter(e=>e.type==='med'&&e.date===selectedDate);
+    const rows=meds.map(m=>{
+      const n=todayMed.filter(e=>e.fields.name===m.name).length;
+      const last=todayMed.filter(e=>e.fields.name===m.name).slice(-1)[0];
+      const prog=m.prn?('今日 '+n+' 次'):(n+'/'+(m.freq||1));
+      const done=!m.prn && n>=(m.freq||1);
+      return '<div class="medrow'+(done?' done':'')+'">'+
+        '<div class="mrinfo"><div class="mrname">'+escapeHtml(m.name)+(m.prn?' <span class="prntag">有需要先食</span>':'')+'</div>'+
+        '<div class="mrsub">'+escapeHtml(m.dose||'')+' · '+prog+(last?' · 最近 '+escapeHtml(last.time):'')+'</div></div>'+
+        '<button class="medtake" data-mid="'+m.id+'">'+(done?'再記一次':'已服用')+'</button></div>';
+    }).join('');
     area.innerHTML = '<div class="quickform">'+
-      '<div class="frow">'+
-        '<div class="fitem"><label>時間</label><input type="time" id="f_time" value="'+nowTimeStr()+'"></div>'+
-        '<div class="fitem"><label>藥物</label><select id="f_medId">'+
-          meds.map(m=>'<option value="'+m.id+'">'+escapeHtml(m.name)+' ('+escapeHtml(m.dose)+')</option>').join('')+
-        '</select></div>'+
-      '</div>'+
-      '<div class="frow"><div class="fitem"><label>備註（隨意）</label><textarea id="f_note" placeholder="想記低嘅其他嘢..."></textarea></div></div>'+
-      '<button class="stampsubmit" id="stampSubmitBtn">蓋章記錄</button>'+
+      '<div class="frow"><div class="fitem" style="max-width:140px"><label>時間（自動，可改）</label><input type="time" id="f_time" value="'+nowTimeStr()+'"></div></div>'+
+      '<div class="medlist">'+rows+'</div>'+
+      '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:6px">撳「已服用」即時記錄，時間用而家（上面改咗就用你改嘅）。記錯咗可以喺時間線刪除。</div>'+
     '</div>';
     area.querySelector('.quickform').style.setProperty('--catcolor', cat.color);
-    document.getElementById('stampSubmitBtn').onclick = ()=>submitEntry(cat, cfg);
+    const tin=document.getElementById('f_time'); let touched=false; tin.addEventListener('input',()=>{touched=true;});
+    area.querySelectorAll('.medtake').forEach(btn=>{
+      btn.onclick=async ()=>{
+        const m=meds.find(x=>x.id===btn.dataset.mid); if(!m) return;
+        const time=(touched&&tin.value)?tin.value:nowTimeStr();
+        const entry={id:'e_'+Date.now()+'_'+Math.floor(Math.random()*1000),type:'med',date:selectedDate,time,fields:{name:m.name,dose:m.dose},note:''};
+        entriesByCat[cat.id]=entriesByCat[cat.id]||[];
+        entriesByCat[cat.id].push(entry);
+        entriesByCat[cat.id].sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time));
+        await safeSet('entries:'+cat.id, entriesByCat[cat.id]);
+        render();
+      };
+    });
     return;
   }
 
@@ -1095,7 +1137,7 @@ function respStats(list){
 }
 function dailyCounts(cat,days){
   const ds=lastNDays(days), all=entriesByCat[cat.id]||[];
-  const meds=cat.medications||[]; const expected=meds.reduce((s,m)=>s+(m.freq||1),0);
+  const meds=regularMeds(cat); const expected=meds.reduce((s,m)=>s+(m.freq||1),0);
   const by=(type)=>ds.map(d=>({label:d,value:all.filter(e=>e.type===type&&e.date===d).length}));
   return {
     ds,
@@ -1192,7 +1234,7 @@ function renderReport(cat){
 
   html+=`<div class="rsec"><h3>病史</h3><div style="font-size:13px">${cat.condition?escapeHtml(cat.condition):'（未填寫）'}</div></div>`;
 
-  html+=`<div class="rsec"><h3>現時藥物${adh!==null?`（最近 7 日完成率 ${adh}%）`:''}</h3>`+(meds.length?`<table class="rtable"><tr><th>藥物</th><th>劑量</th><th>每日次數</th></tr>${meds.map(m=>`<tr><td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.dose||'')}</td><td>${m.freq||1}</td></tr>`).join('')}</table>`:'<div style="font-size:12.5px;color:var(--ink-soft)">未有藥物記錄</div>')+`</div>`;
+  html+=`<div class="rsec"><h3>現時藥物${adh!==null?`（最近 7 日完成率 ${adh}%）`:''}</h3>`+(meds.length?`<table class="rtable"><tr><th>藥物</th><th>劑量</th><th>每日次數</th></tr>${meds.map(m=>`<tr><td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.dose||'')}</td><td>${m.prn?'有需要先食':(m.freq||1)}</td></tr>`).join('')}</table>`:'<div style="font-size:12.5px;color:var(--ink-soft)">未有藥物記錄</div>')+`</div>`;
 
   let wTable='';
   if(wl.length){ wTable=`<table class="rtable"><tr><th>日期</th><th>體重 (kg)</th><th>與上次相比</th></tr>${wl.slice(-6).reverse().map((e,i,arr)=>{ const idx=wl.indexOf(e); const prev=idx>0?parseFloat(wl[idx-1].fields.value):null; const v=parseFloat(e.fields.value); const d=prev===null?'':(v-prev); return `<tr><td>${e.date}</td><td>${fmtN(v)}</td><td>${d===''?'—':(Math.abs(d)<0.005?'不變':(d>0?'▲ +':'▼ ')+fmtN(d)+' kg')}</td></tr>`; }).join('')}</table>`; }
@@ -1274,7 +1316,7 @@ function pixSvg(mood){
 }
 let pixHidden=false, pixLast='';
 function medStatus(cat){
-  const meds=cat.medications||[]; const expected=meds.reduce((s,m)=>s+(m.freq||1),0);
+  const meds=regularMeds(cat); const expected=meds.reduce((s,m)=>s+(m.freq||1),0);
   const t=todayStr(); const all=entriesByCat[cat.id]||[];
   let given=0; meds.forEach(m=>{ given+=Math.min(m.freq||1, all.filter(e=>e.type==='med'&&e.date===t&&e.fields.name===m.name).length); });
   return {expected,given};
