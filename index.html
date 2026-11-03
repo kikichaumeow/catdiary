@@ -258,6 +258,10 @@
   .mrsub{font-size:11.5px;color:var(--ink-soft);}
   .medtake{padding:9px 16px;border:none;border-radius:6px;background:var(--catcolor,var(--tabby));color:#fff;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;}
   .medrow.done .medtake{background:var(--paper-2);color:var(--ink);border:1px solid var(--line-strong);font-weight:400;}
+  .mednote{font-size:11px;color:var(--ink-soft);font-weight:400;line-height:1.3;}
+  .mededitbox{display:flex;flex-wrap:wrap;gap:8px;padding:8px;background:var(--card);border:1px solid var(--line-strong);border-radius:6px;}
+  .mededitbox .fitem{flex:1 1 140px;}
+  .mededitbtns{flex-basis:100%;}
   .tile .n{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;}
   .tile .l{font-size:11px;color:var(--ink-soft);}
   .barsgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;}
@@ -713,6 +717,7 @@ function nextVetDate(cat){
   return future.length ? future[0] : null;
 }
 
+let editingMedId=null;
 function regularMeds(cat){ return (cat.medications||[]).filter(m=>!m.prn); }
 function renderHealthCard(cat){
   const el = document.getElementById('healthcard');
@@ -732,11 +737,21 @@ function renderHealthCard(cat){
     const prog = m.prn
       ? '<span class="prntag">有需要先食</span> <span style="color:var(--ink-soft)">今日 '+given+' 次</span>'
       : '<span class="medprogress">'+dots+'</span> <span style="color:var(--ink-soft)">'+given+'/'+need+'</span>';
+    if(editingMedId===m.id){
+      return '<tr class="mededitrow"><td colspan="4"><div class="mededitbox">'+
+        '<div class="fitem"><label>藥名</label><input type="text" id="em_name" value="'+escapeHtml(m.name)+'"></div>'+
+        '<div class="fitem"><label>細字註解（例:去水丸）</label><input type="text" id="em_note" value="'+escapeHtml(m.note||'')+'" placeholder="例:去水丸 / 心臟藥 / 止嘔"></div>'+
+        '<div class="fitem"><label>劑量</label><input type="text" id="em_dose" value="'+escapeHtml(m.dose||'')+'"></div>'+
+        '<div class="fitem" style="max-width:90px"><label>每日次數</label><input type="number" id="em_freq" min="1" value="'+(m.freq||1)+'"></div>'+
+        '<label class="prnchk"><input type="checkbox" id="em_prn" '+(m.prn?'checked':'')+'> 有需要先食（唔計入每日完成）</label>'+
+        '<div class="mededitbtns"><button class="addmed-btn" id="em_save">儲存</button> <button class="med-del" id="em_cancel">取消</button></div>'+
+      '</div></td></tr>';
+    }
     return '<tr>'+
-      '<td class="medname">'+escapeHtml(m.name)+'</td>'+
+      '<td class="medname">'+escapeHtml(m.name)+(m.note?'<div class="mednote">'+escapeHtml(m.note)+'</div>':'')+'</td>'+
       '<td class="meddose">'+escapeHtml(m.dose)+'</td>'+
       '<td>'+prog+'</td>'+
-      '<td style="white-space:nowrap"><button class="med-del med-prn" data-mid="'+m.id+'">'+(m.prn?'改為恆常':'改為有需要先食')+'</button> <button class="med-del" data-mid="'+m.id+'">刪除</button></td>'+
+      '<td style="white-space:nowrap"><button class="med-del med-edit" data-mid="'+m.id+'">編輯</button> <button class="med-del" data-mid="'+m.id+'">刪除</button></td>'+
     '</tr>';
   }).join('');
   el.innerHTML =
@@ -748,6 +763,7 @@ function renderHealthCard(cat){
       : '<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px">仲未有用藥記錄，落面加返啲藥。</div>') +
     '<div class="addmed-form">'+
       '<div class="fitem"><label>藥物名</label><input type="text" id="medName" placeholder="例:Furosemide"></div>'+
+      '<div class="fitem"><label>細字註解（可留空）</label><input type="text" id="medNote" placeholder="例:去水丸"></div>'+
       '<div class="fitem"><label>劑量</label><input type="text" id="medDose" placeholder="例:10mg 1粒"></div>'+
       '<div class="fitem" style="max-width:90px"><label>每日次數</label><input type="number" id="medFreq" value="1" min="1"></div>'+
       '<label class="prnchk"><input type="checkbox" id="medPrn"> 有需要先食（唔計入每日完成）</label>'+
@@ -758,15 +774,31 @@ function renderHealthCard(cat){
     cat.condition = e.target.value.trim();
     await safeSet('cats', cats);
   };
-  el.querySelectorAll('.med-prn').forEach(btn=>{
-    btn.onclick = async ()=>{
-      const m=(cat.medications||[]).find(x=>x.id===btn.dataset.mid); if(!m) return;
-      m.prn=!m.prn;
-      await safeSet('cats', cats);
-      render();
-    };
+  el.querySelectorAll('.med-edit').forEach(btn=>{
+    btn.onclick = ()=>{ editingMedId=btn.dataset.mid; renderHealthCard(cat); };
   });
-  el.querySelectorAll('.med-del:not(.med-prn)').forEach(btn=>{
+  const emSave=document.getElementById('em_save');
+  if(emSave){
+    document.getElementById('em_cancel').onclick=()=>{ editingMedId=null; renderHealthCard(cat); };
+    emSave.onclick=async ()=>{
+      const m=(cat.medications||[]).find(x=>x.id===editingMedId); if(!m){ editingMedId=null; return; }
+      const nn=document.getElementById('em_name').value.trim(); if(!nn) return;
+      const oldName=m.name;
+      m.name=nn; m.note=document.getElementById('em_note').value.trim();
+      m.dose=document.getElementById('em_dose').value.trim();
+      m.freq=parseInt(document.getElementById('em_freq').value)||1;
+      m.prn=document.getElementById('em_prn').checked;
+      if(oldName!==nn){
+        // 舊記錄跟住改名，進度先唔會歸零
+        const list=entriesByCat[cat.id]||[]; let changed=false;
+        list.forEach(e=>{ if(e.type==='med' && e.fields && e.fields.name===oldName){ e.fields.name=nn; changed=true; } });
+        if(changed) await safeSet('entries:'+cat.id, list);
+      }
+      await safeSet('cats', cats);
+      editingMedId=null; render();
+    };
+  }
+  el.querySelectorAll('.med-del[data-mid]:not(.med-edit)').forEach(btn=>{
     btn.onclick = async ()=>{
       cat.medications = cat.medications.filter(m=>m.id!==btn.dataset.mid);
       await safeSet('cats', cats);
@@ -779,7 +811,7 @@ function renderHealthCard(cat){
     const freq = parseInt(document.getElementById('medFreq').value)||1;
     if(!name) return;
     cat.medications = cat.medications||[];
-    cat.medications.push({id:'med_'+Date.now(), name, dose, freq, prn:!!document.getElementById('medPrn').checked});
+    cat.medications.push({id:'med_'+Date.now(), name, dose, freq, note:document.getElementById('medNote').value.trim(), prn:!!document.getElementById('medPrn').checked});
     await safeSet('cats', cats);
     render();
   };
@@ -823,7 +855,7 @@ function renderQuickForm(cat){
       const prog=m.prn?('今日 '+n+' 次'):(n+'/'+(m.freq||1));
       const done=!m.prn && n>=(m.freq||1);
       return '<div class="medrow'+(done?' done':'')+'">'+
-        '<div class="mrinfo"><div class="mrname">'+escapeHtml(m.name)+(m.prn?' <span class="prntag">有需要先食</span>':'')+'</div>'+
+        '<div class="mrinfo"><div class="mrname">'+escapeHtml(m.name)+(m.note?' <span class="mednote" style="display:inline">'+escapeHtml(m.note)+'</span>':'')+(m.prn?' <span class="prntag">有需要先食</span>':'')+'</div>'+
         '<div class="mrsub">'+escapeHtml(m.dose||'')+' · '+prog+(last?' · 最近 '+escapeHtml(last.time):'')+'</div></div>'+
         '<button class="medtake" data-mid="'+m.id+'">'+(done?'再記一次':'已服用')+'</button></div>';
     }).join('');
@@ -1234,7 +1266,7 @@ function renderReport(cat){
 
   html+=`<div class="rsec"><h3>病史</h3><div style="font-size:13px">${cat.condition?escapeHtml(cat.condition):'（未填寫）'}</div></div>`;
 
-  html+=`<div class="rsec"><h3>現時藥物${adh!==null?`（最近 7 日完成率 ${adh}%）`:''}</h3>`+(meds.length?`<table class="rtable"><tr><th>藥物</th><th>劑量</th><th>每日次數</th></tr>${meds.map(m=>`<tr><td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.dose||'')}</td><td>${m.prn?'有需要先食':(m.freq||1)}</td></tr>`).join('')}</table>`:'<div style="font-size:12.5px;color:var(--ink-soft)">未有藥物記錄</div>')+`</div>`;
+  html+=`<div class="rsec"><h3>現時藥物${adh!==null?`（最近 7 日完成率 ${adh}%）`:''}</h3>`+(meds.length?`<table class="rtable"><tr><th>藥物</th><th>劑量</th><th>每日次數</th></tr>${meds.map(m=>`<tr><td>${escapeHtml(m.name)}${m.note?` <span style="font-size:10.5px;color:var(--ink-soft)">${escapeHtml(m.note)}</span>`:''}</td><td>${escapeHtml(m.dose||'')}</td><td>${m.prn?'有需要先食':(m.freq||1)}</td></tr>`).join('')}</table>`:'<div style="font-size:12.5px;color:var(--ink-soft)">未有藥物記錄</div>')+`</div>`;
 
   let wTable='';
   if(wl.length){ wTable=`<table class="rtable"><tr><th>日期</th><th>體重 (kg)</th><th>與上次相比</th></tr>${wl.slice(-6).reverse().map((e,i,arr)=>{ const idx=wl.indexOf(e); const prev=idx>0?parseFloat(wl[idx-1].fields.value):null; const v=parseFloat(e.fields.value); const d=prev===null?'':(v-prev); return `<tr><td>${e.date}</td><td>${fmtN(v)}</td><td>${d===''?'—':(Math.abs(d)<0.005?'不變':(d>0?'▲ +':'▼ ')+fmtN(d)+' kg')}</td></tr>`; }).join('')}</table>`; }
