@@ -222,7 +222,7 @@
   .viewtabs{display:flex;gap:0;border-bottom:1px solid var(--line-strong);background:var(--paper-2);}
   .viewtabs button{flex:1;padding:10px 8px;border:none;background:none;font-family:inherit;font-size:13px;color:var(--ink-soft);cursor:pointer;border-bottom:3px solid transparent;}
   .viewtabs button.active{color:var(--ink);font-weight:600;border-bottom-color:var(--catcolor,var(--tabby));background:var(--card);}
-  #viewCharts,#viewReport{padding:16px 16px 24px;}
+  #viewCharts,#viewReport,#viewMeds{padding:16px 16px 24px;}
   .rangebar{display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
   .rangebar span{font-size:12px;color:var(--ink-soft);margin-right:2px;}
   .rangebar button,.btn-sm{padding:5px 12px;border:1px solid var(--line-strong);border-radius:14px;background:var(--paper-2);font-family:inherit;font-size:12px;color:var(--ink);cursor:pointer;}
@@ -281,7 +281,7 @@
   @media print{
     @page{size:A4;margin:12mm;}
     body{background:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .masthead,.cattabs,#addcatArea,.viewtabs,.noprint,#viewRecord,#viewCharts{display:none !important;}
+    .masthead,.cattabs,#addcatArea,.viewtabs,.noprint,#viewRecord,#viewCharts,#viewMeds{display:none !important;}
     .wrap{padding:0;max-width:none;}
     .board{border:none;}
     #viewReport{padding:0;display:block !important;}
@@ -300,6 +300,25 @@
   @media (prefers-reduced-motion:reduce){#pixcat .pcbody{animation:none !important;}}
   body{padding-bottom:96px;}
   @media print{#pixcat{display:none !important;}}
+  .stockcard{background:var(--paper-2);border:1px solid var(--line);border-left:4px solid var(--moss);border-radius:6px;padding:12px 14px;margin-bottom:12px;}
+  .stockcard.warn{border-left-color:#d49a2b;}
+  .stockcard.low{border-left-color:var(--brick);}
+  .stockcard .sname{font-weight:600;font-size:14.5px;}
+  .stockcard .sbig{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;line-height:1.2;margin:4px 0 2px;}
+  .stockcard .sbig small{font-size:13px;font-weight:400;color:var(--ink-soft);margin-left:3px;}
+  .stockcard .ssub{font-size:12px;color:var(--ink-soft);}
+  .stockcard .sbar{height:8px;border-radius:4px;background:var(--line);margin:8px 0;overflow:hidden;}
+  .stockcard .sbar i{display:block;height:100%;background:var(--moss);}
+  .stockcard.warn .sbar i{background:#d49a2b;}
+  .stockcard.low .sbar i{background:var(--brick);}
+  .stockcard .alert{font-size:12.5px;font-weight:600;color:var(--brick);margin-top:2px;}
+  .stockcard.warn .alert{color:#a87414;}
+  .srow{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px;}
+  .srow .fitem{flex:1 1 90px;}
+  .srow button,.sbtn{padding:8px 14px;border-radius:5px;border:1px solid var(--line-strong);background:var(--paper-2);font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink);}
+  .srow button.pri{background:var(--catcolor,var(--tabby));color:#fff;border:none;font-weight:600;}
+  .stocksum{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:14px;font-size:13px;}
+  .stocksum b{color:var(--brick);}
   @media(max-width:640px){
     .grid{grid-template-columns:1fr;}
     .panel.stamps{border-right:none;border-bottom:1px solid var(--line);}
@@ -328,6 +347,7 @@
     <div class="viewtabs noprint" id="viewtabs">
       <button data-view="record" class="active">記錄</button>
       <button data-view="charts">走勢圖</button>
+      <button data-view="meds">藥量</button>
       <button data-view="report">醫生報告</button>
     </div>
     <div id="viewRecord">
@@ -352,6 +372,7 @@
     <div class="stats" id="stats"></div>
     </div>
     <div id="viewCharts" hidden></div>
+    <div id="viewMeds" hidden></div>
     <div id="viewReport" hidden></div>
   </div>
 
@@ -1145,12 +1166,14 @@ function applyView(){
   document.getElementById('viewRecord').hidden = currentView!=='record';
   document.getElementById('viewCharts').hidden = currentView!=='charts';
   document.getElementById('viewReport').hidden = currentView!=='report';
+  document.getElementById('viewMeds').hidden = currentView!=='meds';
   document.querySelectorAll('#viewtabs button').forEach(b=>b.classList.toggle('active', b.dataset.view===currentView));
 }
 function renderAnalysis(cat){
   applyView();
   if(currentView==='charts') renderCharts(cat);
   else if(currentView==='report') renderReport(cat);
+  else if(currentView==='meds') renderMeds(cat);
 }
 
 function weightSeries(cat,days,color){
@@ -1382,6 +1405,76 @@ function updatePixCat(cat){
   if(key===pixLast) return; pixLast=key;
   el.innerHTML=`<div class="pcbubble ${bcls}" ${pixHidden?'hidden':''}>${escapeHtml(msg)}</div><button class="pcbody" type="button" aria-label="${escapeHtml(msg)}">${pixSvg(mood)}</button>`;
   el.querySelector('.pcbody').onclick=()=>{ pixHidden=!pixHidden; pixLast=''; updatePixCat(cat); };
+}
+
+// ================= 藥量 =================
+let editingStockId=null;
+function parseQty(v){ v=String(v==null?'':v).trim(); if(!v) return NaN; const m=v.match(/^(\d+)\s*\/\s*(\d+)$/); if(m) return parseInt(m[1])/parseInt(m[2]); const mm=v.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)$/); if(mm) return parseInt(mm[1])+parseInt(mm[2])/parseInt(mm[3]); return parseFloat(v); }
+function qtyStr(v){ if(v===null||isNaN(v)) return '—'; const w=Math.floor(v+1e-9), f=v-w; const fr={0.25:'1/4',0.5:'1/2',0.75:'3/4'}; for(const k in fr){ if(Math.abs(f-k)<0.005) return (w?w+' ':'')+fr[k]; } if(Math.abs(f)<0.005) return String(w); return String(Math.round(v*100)/100); }
+function entryCreated(e){ const n=parseInt(String(e.id||'').split('_')[1]); return (n>1e12)?n:tsOf(e); }
+function stockInfo(cat,m){
+  if(!m.stock||isNaN(m.stock.qty)) return null;
+  const per=m.per>0?m.per:1;
+  const used=(entriesByCat[cat.id]||[]).filter(e=>e.type==='med'&&e.fields.name===m.name&&entryCreated(e)>=m.stock.since).length*per;
+  const remaining=Math.round((m.stock.qty-used)*1000)/1000;
+  const perDay=m.prn?null:per*(m.freq||1);
+  const days=(perDay&&perDay>0)?Math.max(0,remaining)/perDay:null;
+  let endDate=null; if(days!==null){ const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()+Math.floor(days)); endDate=d; }
+  return {remaining,per,used,perDay,days,endDate,start:m.stock.start||m.stock.qty};
+}
+function renderMeds(cat){
+  const el=document.getElementById('viewMeds');
+  const meds=cat.medications||[];
+  if(!meds.length){ el.innerHTML='<div class="chartempty">仲未有藥物，去「記錄」頁嘅「健康檔案」加藥先。</div>'; return; }
+  const infos=meds.map(m=>({m,i:stockInfo(cat,m)}));
+  const soon=infos.filter(x=>x.i&&x.i.days!==null&&x.i.days<=14).sort((a,b)=>a.i.days-b.i.days);
+  let html='';
+  if(soon.length) html+=`<div class="stocksum">⚠ 快食哂：`+soon.map(x=>`<b>${escapeHtml(x.m.name)}</b>（約 ${Math.floor(x.i.days)} 日）`).join('、')+`</div>`;
+  else if(infos.some(x=>x.i)) html+=`<div class="stocksum">所有已設定嘅藥，存量都夠食 14 日以上。</div>`;
+  html+=infos.map(({m,i})=>{
+    const unit=m.unit||'粒';
+    const note=m.note?` <span class="mednote" style="display:inline">${escapeHtml(m.note)}</span>`:'';
+    const head=`<div class="sname">${escapeHtml(m.name)}${note}${m.prn?' <span class="prntag">有需要先食</span>':''}</div>`;
+    const editing=editingStockId===m.id||!i;
+    let body='';
+    if(i && !editing){
+      const cls=(i.days!==null&&i.days<=7)||i.remaining<=0?'low':((i.days!==null&&i.days<=14)?'warn':'');
+      const pct=Math.max(0,Math.min(100,i.start>0?i.remaining/i.start*100:0));
+      body=`<div class="sbig">${qtyStr(Math.max(0,i.remaining))}<small>${escapeHtml(unit)}</small></div>`+
+        `<div class="ssub">每次 ${qtyStr(i.per)} ${escapeHtml(unit)}${m.prn?'':' · 每日 '+(m.freq||1)+' 次'} · 已用 ${qtyStr(i.used)} ${escapeHtml(unit)}</div>`+
+        `<div class="sbar"><i style="width:${pct}%"></i></div>`+
+        (i.days!==null?`<div class="ssub">仲夠食約 <b>${Math.floor(i.days)}</b> 日 · 約 ${i.endDate.getMonth()+1}月${i.endDate.getDate()}日食哂</div>`:'<div class="ssub">有需要先食，冇固定食完日期</div>')+
+        (i.remaining<=0?'<div class="alert">已經食哂，要補貨！</div>':(cls==='low'?'<div class="alert">快食哂，記得補貨</div>':(cls==='warn'?'<div class="alert">存量開始少，可以準備補貨</div>':'')))+
+        `<div class="srow"><div class="fitem"><label>補貨數量（${escapeHtml(unit)}）</label><input type="text" inputmode="decimal" id="refill_${m.id}" placeholder="例:30"></div><button class="pri" data-refill="${m.id}">補貨</button><button data-editstock="${m.id}">修改設定</button></div>`;
+      return `<div class="stockcard ${cls}">${head}${body}</div>`;
+    }
+    body=`<div class="ssub" style="margin:4px 0">${i?'修改設定（改咗「剩餘數量」會由而家重新計）':'設定一次，之後每次撳「已服用」就自動扣減'}</div>`+
+      `<div class="srow"><div class="fitem"><label>而家剩餘數量</label><input type="text" inputmode="decimal" id="sq_${m.id}" value="${i?qtyStr(Math.max(0,i.remaining)):''}" placeholder="例:60"></div>`+
+      `<div class="fitem"><label>每次用量</label><input type="text" id="sp_${m.id}" value="${m.per?qtyStr(m.per):''}" placeholder="例:1 或 1/4"></div>`+
+      `<div class="fitem" style="max-width:90px"><label>單位</label><select id="su_${m.id}">${['粒','ml','片','包','支'].map(u=>`<option ${u===unit?'selected':''}>${u}</option>`).join('')}</select></div></div>`+
+      `<div class="srow"><button class="pri" data-savestock="${m.id}">${i?'儲存':'開始計'}</button>${i?`<button data-cancelstock="1">取消</button>`:''}</div>`;
+    return `<div class="stockcard">${head}${body}</div>`;
+  }).join('');
+  html+=`<div class="rnote">每次撳「已服用」會自動按「每次用量」扣減。「每次用量」可以輸入分數，例如 1/4。</div>`;
+  el.innerHTML=html;
+  const find=id=>meds.find(x=>x.id===id);
+  el.querySelectorAll('[data-editstock]').forEach(b=>b.onclick=()=>{ editingStockId=b.dataset.editstock; renderMeds(cat); });
+  el.querySelectorAll('[data-cancelstock]').forEach(b=>b.onclick=()=>{ editingStockId=null; renderMeds(cat); });
+  el.querySelectorAll('[data-savestock]').forEach(b=>b.onclick=async()=>{
+    const m=find(b.dataset.savestock); const id=m.id;
+    const q=parseQty(document.getElementById('sq_'+id).value), per=parseQty(document.getElementById('sp_'+id).value);
+    if(isNaN(q)||q<0||isNaN(per)||per<=0){ alert('請輸入剩餘數量同每次用量（數字，例如 60、1/4）'); return; }
+    m.per=per; m.unit=document.getElementById('su_'+id).value;
+    m.stock={qty:q,start:q,since:Date.now()};
+    editingStockId=null; await safeSet('cats',cats); renderMeds(cat);
+  });
+  el.querySelectorAll('[data-refill]').forEach(b=>b.onclick=async()=>{
+    const m=find(b.dataset.refill); const add=parseQty(document.getElementById('refill_'+m.id).value);
+    if(isNaN(add)||add<=0){ alert('請輸入補貨數量（數字）'); return; }
+    const cur=stockInfo(cat,m); const base=cur?Math.max(0,cur.remaining):0;
+    m.stock={qty:base+add,start:base+add,since:Date.now()};
+    await safeSet('cats',cats); renderMeds(cat);
+  });
 }
 
 function escapeHtml(s){
