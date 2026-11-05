@@ -304,6 +304,13 @@
   #pixcat.sad .pcbody{animation:pcsway 2.4s steps(2,end) infinite;}
   @keyframes pcbob{50%{transform:translateY(-4px);}}
   @keyframes pcsway{50%{transform:translateY(2px);}}
+  #pixcat .pcbody.jump{animation:pcjump .5s steps(4,end);}
+  #pixcat .pcbody.shake{animation:pcshake .4s steps(4,end);}
+  @keyframes pcjump{30%{transform:translateY(-16px);}60%{transform:translateY(-16px);}}
+  @keyframes pcshake{25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+  .pcheart{position:absolute;bottom:70px;color:var(--brick);font-size:16px;pointer-events:none;animation:pcfloat 1.2s ease-out forwards;opacity:0;}
+  @keyframes pcfloat{0%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:translateY(-46px);}}
+  #pixcat{position:fixed;}
   @media (prefers-reduced-motion:reduce){#pixcat .pcbody{animation:none !important;}}
   body{padding-bottom:96px;}
   @media print{#pixcat{display:none !important;}}
@@ -1496,12 +1503,55 @@ const FURS={
   black:{label:'黑',c:'#4e4b55',t:'#34323a',w:'#6d6a77'},
   brown:{label:'棕',c:'#c89a6b',t:'#8a5a33',w:'#e7c9a3'}
 };
-function pixSvg(mood,fur){
-  const g=pixGrid(mood); let r=''; const F=FURS[fur]||FURS.cream; const pal=Object.assign({},PIX_PAL,{c:F.c,t:F.t,w:F.w});
+function pixSvg(mood,fur,opt){
+  opt=opt||{}; const g=pixGrid(mood);
+  if(opt.blink){ [6,7].forEach(y=>[4,5,10,11].forEach(x=>{ if('eh'.includes(g[y][x])) g[y][x]='c'; })); [4,5,10,11].forEach(x=>{ g[7][x]='o'; }); }
+  if(opt.tailUp){ g[13][15]='.'; g[12][15]='o'; g[11][15]='o'; }
+  if(opt.squint){ [6,7].forEach(y=>[4,5,10,11].forEach(x=>{ g[y][x]='c'; })); [[4,6],[5,7],[4,8],[11,6],[10,7],[11,8]].forEach(([x,y])=>{ g[y][x]='o'; }); }
+  let r=''; const F=FURS[fur]||FURS.cream; const pal=Object.assign({},PIX_PAL,{c:F.c,t:F.t,w:F.w});
   g.forEach((row,y)=>row.forEach((ch,x)=>{ if(ch!=='.' && pal[ch]) r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${pal[ch]}"/>`; }));
   return `<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
 }
-let pixHidden=false, pixLast='';
+let pixHidden=false, pixLast='', pixState=null, pixTemp=null, pixTaps=[], pixTempT=null;
+const PIX_SAY={
+  happy:['咕嚕咕嚕~','摸多啲啦 ♥','喵~','今日好開心!','再摸再摸!','(蹭蹭)'],
+  half:['摸摸可以,但要食哂藥先喎','喵?仲有藥…','就嚟食哂喇,加油!','(望住你)'],
+  sad:['…唔想食藥','喵嗚…','冇心情玩…','食哂藥先會開心啲'],
+  enough:['夠喇夠喇!㨃到我暈!','喂!唔好再撳喇!']
+};
+function pixHearts(el,n){
+  for(let i=0;i<n;i++){
+    const h=document.createElement('span'); h.className='pcheart'; h.textContent='♥';
+    h.style.right=(10+Math.random()*50)+'px'; h.style.animationDelay=(i*0.12)+'s';
+    el.appendChild(h); setTimeout(()=>h.remove(),1400);
+  }
+}
+function pixPoke(cat){
+  const el=document.getElementById('pixcat'); if(!el||!pixState) return;
+  const now=Date.now(); pixTaps=pixTaps.filter(t=>now-t<3000); pixTaps.push(now);
+  let text, kind=pixState.mood;
+  if(pixTaps.length>=6){ text=PIX_SAY.enough[Math.floor(Math.random()*2)]; kind='enough'; }
+  else { const arr=PIX_SAY[pixState.mood]||PIX_SAY.happy; text=arr[Math.floor(Math.random()*arr.length)]; }
+  pixHidden=false; pixTemp={text,until:now+2600}; pixLast=''; updatePixCat(cat);
+  const body=el.querySelector('.pcbody'); const wrap=el;
+  if(body){
+    body.classList.remove('jump','shake'); void body.offsetWidth;
+    body.classList.add(kind==='enough'||kind==='sad'?'shake':'jump');
+  }
+  if(kind==='happy'||kind==='half') pixHearts(wrap,kind==='happy'?4:2);
+  pixSquintUntil=now+900; pixDraw();
+  clearTimeout(pixTempT); pixTempT=setTimeout(()=>{ pixTemp=null; pixLast=''; updatePixCat(cat); },2700);
+}
+let pixTail=false, pixBlink=false, pixSquintUntil=0;
+function pixDraw(){
+  const el=document.getElementById('pixcat'); if(!el||el.hidden||!pixState) return;
+  const body=el.querySelector('.pcbody'); if(!body) return;
+  const squint=Date.now()<pixSquintUntil && pixState.mood!=='sad';
+  body.innerHTML=pixSvg(pixState.mood,pixState.fur,{blink:pixBlink&&!squint,tailUp:pixTail,squint});
+}
+if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)){
+  setInterval(()=>{ pixTail=!pixTail; pixBlink=(Math.random()<0.18); pixDraw(); },650);
+}
 function medStatus(cat){
   const meds=regularMeds(cat); const expected=meds.reduce((s,m)=>s+(m.freq||1),0);
   const t=todayStr(); const all=entriesByCat[cat.id]||[];
@@ -1527,11 +1577,14 @@ function updatePixCat(cat){
   else if(st.given>0 && st.given*2>=st.expected){ mood='half'; msg=`${cat.name}:食到一半喇,就嚟食哂,少少開心`; }
   else { mood='sad'; msg=`${cat.name}:仲有 ${left} 次藥未食…`; }
   const bcls=(mood==='sad'||warn)?'sad':mood;
+  if(pixTemp && Date.now()<pixTemp.until){ msg=`${cat.name}:${pixTemp.text}`; }
   const key=cat.id+'|'+mood+'|'+msg+'|'+pixHidden+'|'+(cat.fur||'');
   el.hidden=false; el.className=(mood==='sad'?'sad':'happy')+' noprint';
   if(key===pixLast) return; pixLast=key;
   el.innerHTML=`<div class="pcbubble ${bcls}" ${pixHidden?'hidden':''}>${escapeHtml(msg)}</div><button class="pcbody" type="button" aria-label="${escapeHtml(msg)}">${pixSvg(mood,cat.fur)}</button>`;
-  el.querySelector('.pcbody').onclick=()=>{ pixHidden=!pixHidden; pixLast=''; updatePixCat(cat); };
+  pixState={mood,fur:cat.fur||'',name:cat.name};
+  el.querySelector('.pcbody').onclick=()=>pixPoke(cat);
+  const bb=el.querySelector('.pcbubble'); if(bb) bb.onclick=()=>{ pixHidden=true; pixLast=''; updatePixCat(cat); };
 }
 
 // ================= 藥量 =================
