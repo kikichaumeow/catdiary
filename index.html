@@ -89,8 +89,8 @@
 
   .board{background:var(--card);border:1px solid var(--line-strong);border-radius:6px;overflow:hidden;}
   .datebar{
-    display:flex;align-items:center;justify-content:center;gap:16px;
-    padding:14px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;gap:8px 8px;flex-wrap:wrap;
+    padding:12px 10px;border-bottom:1px solid var(--line);
     font-family:'IBM Plex Mono',monospace;
   }
   .datebar button{
@@ -98,10 +98,10 @@
     border-radius:50%;cursor:pointer;color:var(--ink);font-size:15px;line-height:1;
   }
   .datebar button:hover{background:var(--paper-2);}
-  .datebar .datelabel{font-size:15px;font-weight:600;min-width:170px;text-align:center;}
+  .datebar .datelabel{font-size:14px;font-weight:600;min-width:150px;text-align:center;white-space:nowrap;}
   .datebar .today-btn{
     font-family:'Noto Sans TC',sans-serif;font-size:12px;border-radius:14px;
-    width:auto;padding:0 12px;height:26px;color:var(--tabby-dark);border-color:var(--tabby);
+    width:auto;padding:0 12px;height:30px;color:var(--tabby-dark);border-color:var(--tabby);white-space:nowrap;
   }
 
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:1px;background:var(--line);border-top:1px solid var(--line);}
@@ -352,6 +352,11 @@
   .delbtns button{padding:9px 16px;border-radius:5px;border:none;background:var(--brick);color:#fff;font-weight:600;font-family:inherit;cursor:pointer;}
   .delbtns button.alt{background:var(--paper-2);color:var(--ink);border:1px solid var(--line-strong);font-weight:400;}
   .delbtns button:disabled{opacity:.35;cursor:not-allowed;}
+  .lowbanner{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#f8e1dc;color:var(--brick);border-bottom:1px solid var(--brick);padding:9px 14px;font-size:13px;cursor:pointer;}
+  .lowbanner .lbgo{white-space:nowrap;font-weight:600;}
+  .lowbanner[hidden]{display:none;}
+  .datepick{position:relative;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1px solid var(--line-strong);border-radius:50%;background:var(--paper-2);cursor:pointer;font-size:16px;overflow:hidden;}
+  .datepick input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
   @media(max-width:640px){
     .grid{grid-template-columns:1fr;}
     .panel.stamps{border-right:none;border-bottom:1px solid var(--line);}
@@ -384,10 +389,14 @@
       <button data-view="report">醫生報告</button>
     </div>
     <div id="viewRecord">
+    <div class="lowbanner noprint" id="lowbanner" hidden></div>
     <div class="datebar">
+      <button id="prevWeek" title="前 7 日">«</button>
       <button id="prevDay">‹</button>
       <div class="datelabel" id="dateLabel"></div>
       <button id="nextDay">›</button>
+      <button id="nextWeek" title="後 7 日">»</button>
+      <label class="datepick" title="揀日期">📅<input type="date" id="datePick"></label>
       <button class="today-btn" id="todayBtn">今日</button>
     </div>
     <div class="grid">
@@ -775,12 +784,14 @@ function render(){
   document.documentElement.style.setProperty('--catcolor', cat.color);
   document.getElementById('board').style.setProperty('--catcolor', cat.color);
   document.getElementById('dateLabel').textContent = fmtDateLabel(selectedDate);
+  { const dp=document.getElementById('datePick'); if(dp){ dp.value=selectedDate; dp.max=todayStr(); } }
 
   renderHealthCard(cat);
   renderStampGrid(cat);
   renderStats(cat);
   renderTimeline(cat);
   renderAnalysis(cat);
+  renderLowBanner(cat);
   updatePixCat(cat);
 }
 
@@ -1223,7 +1234,7 @@ function renderTimeline(cat){
 }
 
 // ================= 走勢圖 / 統計 / 醫生報告 =================
-let currentView='record', chartRange=90, bloodParam=null, tileType=null;
+let currentView='record', chartRange=90, bloodParam=null, tileType=null, tileLimit=10;
 const DAY=86400000;
 const TYPE_LABEL={}; CATEGORIES.forEach(c=>TYPE_LABEL[c.id]=c.label);
 
@@ -1367,13 +1378,14 @@ function renderCharts(cat){
   const tiles=tdef.map(([t,l])=>`<button type="button" class="tile ${tileType===t?'sel':''}" data-tile="${t}"><div class="n">${cnt(t)}</div><div class="l">${l}</div></button>`).join('');
   let tileList='';
   if(tileType){
-    const rows=(entriesByCat[cat.id]||[]).filter(e=>e.type===tileType).sort((x,y)=>tsOf(y)-tsOf(x)).slice(0,10);
+    const allRows=(entriesByCat[cat.id]||[]).filter(e=>e.type===tileType).sort((x,y)=>tsOf(y)-tsOf(x)); const rows=allRows.slice(0,tileLimit);
     const lbl=(tdef.find(x=>x[0]===tileType)||[,''])[1];
-    tileList=`<div class="tilelist"><h4>${lbl} · 最近 ${rows.length} 次</h4>`+(rows.length?rows.map(e=>{const d=new Date(e.date+'T00:00:00');const sm=entrySummary(e);return `<div class="trow"><span class="td">${d.getMonth()+1}月${d.getDate()}日 ${escapeHtml(e.time||'')}</span><span>${escapeHtml(sm)}${e.note?` <span class="tn">(${escapeHtml(e.note)})</span>`:''}</span></div>`;}).join(''):'<div class="chartempty">未有記錄</div>')+`</div>`;
+    tileList=`<div class="tilelist"><h4>${lbl} · 最近 ${rows.length} 次（共 ${allRows.length} 次）</h4>`+(rows.length?rows.map(e=>{const d=new Date(e.date+'T00:00:00');const sm=entrySummary(e);return `<div class="trow"><span class="td">${d.getMonth()+1}月${d.getDate()}日 ${escapeHtml(e.time||'')}</span><span>${escapeHtml(sm)}${e.note?` <span class="tn">(${escapeHtml(e.note)})</span>`:''}</span></div>`;}).join('')+(allRows.length>rows.length?'<button class="sbtn" id="tileMore" style="margin-top:8px">顯示更多</button>':''):'<div class="chartempty">未有記錄</div>')+`</div>`;
   }
   el.innerHTML=`<div class="rangebar"><span>範圍</span>${rb}</div>${weightCard}${respCard}${bloodCard}`+
     `<div class="ccard"><h3>記錄總數（${chartRange?('最近 '+chartRange+' 日'):'全部'}）<span style="font-weight:400;font-size:11px;color:var(--ink-soft)"> 撳一項睇最近 10 次</span></h3><div class="tilegrid" style="margin:0">${tiles}</div>${tileList}</div>`;
-  el.querySelectorAll('[data-tile]').forEach(b=>b.onclick=()=>{ tileType=(tileType===b.dataset.tile?null:b.dataset.tile); renderCharts(cat); });
+  el.querySelectorAll('[data-tile]').forEach(b=>b.onclick=()=>{ tileType=(tileType===b.dataset.tile?null:b.dataset.tile); tileLimit=10; renderCharts(cat); });
+  const tm=el.querySelector('#tileMore'); if(tm) tm.onclick=()=>{ tileLimit+=20; renderCharts(cat); };
   el.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{ chartRange=parseInt(b.dataset.range); renderCharts(cat); });
   const sel=el.querySelector('#bloodSel'); if(sel) sel.onchange=()=>{ bloodParam=sel.value; renderCharts(cat); };
 }
@@ -1612,6 +1624,14 @@ function stockInfo(cat,m){
   let endDate=null; if(days!==null){ const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()+Math.floor(days)); endDate=d; }
   return {remaining,per,used,perDay,days,endDate,start:m.stock.start||m.stock.qty};
 }
+function renderLowBanner(cat){
+  const el=document.getElementById('lowbanner'); if(!el) return;
+  const low=(cat.medications||[]).map(m=>({m,i:stockInfo(cat,m)})).filter(x=>x.i&&(x.i.remaining<=0||(x.i.days!==null&&x.i.days<=7)));
+  if(!low.length){ el.hidden=true; el.innerHTML=''; return; }
+  el.hidden=false;
+  el.innerHTML='<span>⚠ 藥快食哂：'+low.map(x=>'<b>'+escapeHtml(x.m.name)+'</b>'+(x.i.remaining<=0?'（已食哂）':'（約 '+Math.floor(x.i.days)+' 日）')).join('、')+'</span><span class="lbgo">睇藥量 ›</span>';
+  el.onclick=()=>setView('meds');
+}
 function renderMeds(cat){
   const el=document.getElementById('viewMeds');
   const meds=cat.medications||[];
@@ -1678,6 +1698,9 @@ function shiftDate(days){
   render();
 }
 document.getElementById('prevDay').onclick = ()=>shiftDate(-1);
+document.getElementById('prevWeek').onclick = ()=>shiftDate(-7);
+document.getElementById('nextWeek').onclick = ()=>shiftDate(7);
+document.getElementById('datePick').onchange = (e)=>{ if(e.target.value){ selectedDate=e.target.value; render(); } };
 document.getElementById('nextDay').onclick = ()=>shiftDate(1);
 document.getElementById('todayBtn').onclick = ()=>{ selectedDate = todayStr(); render(); };
 
