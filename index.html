@@ -336,6 +336,15 @@
   .editbox .fitem{flex:1 1 120px;}
   .editbox .bloodgrid{flex-basis:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;}
   .editbtn{border:1px solid var(--line-strong);background:var(--paper-2);border-radius:4px;font-size:11px;padding:3px 8px;color:var(--ink-soft);cursor:pointer;font-family:inherit;margin-right:4px;}
+  .delmodal{position:fixed;inset:0;background:rgba(40,30,20,.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .delbox{background:var(--card);border:2px solid var(--brick);border-radius:8px;padding:18px;max-width:380px;width:100%;box-shadow:4px 4px 0 var(--brick);}
+  .delbox h3{margin:0 0 8px;font-family:'Noto Serif TC',serif;color:var(--brick);}
+  .delbox p{font-size:13px;margin:6px 0;}
+  .delbox input{width:100%;margin:6px 0;padding:10px;font-size:15px;box-sizing:border-box;}
+  .delbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;}
+  .delbtns button{padding:9px 16px;border-radius:5px;border:none;background:var(--brick);color:#fff;font-weight:600;font-family:inherit;cursor:pointer;}
+  .delbtns button.alt{background:var(--paper-2);color:var(--ink);border:1px solid var(--line-strong);font-weight:400;}
+  .delbtns button:disabled{opacity:.35;cursor:not-allowed;}
   @media(max-width:640px){
     .grid{grid-template-columns:1fr;}
     .panel.stamps{border-right:none;border-bottom:1px solid var(--line);}
@@ -682,8 +691,29 @@ function renderCatTabs(){
   wrap.appendChild(add);
 }
 
+function confirmDeleteCat(c){
+  return new Promise(res=>{
+    const ov=document.createElement('div'); ov.className='delmodal noprint';
+    ov.innerHTML='<div class="delbox" role="dialog" aria-modal="true">'+
+      '<h3>刪除「'+escapeHtml(c.name)+'」？</h3>'+
+      '<p>會永久刪走佢所有記錄、藥物同健康檔案，兩部電話都會冇咗，<b>刪咗冚唔返</b>。</p>'+
+      '<p>為免㨃錯，請將佢個名「<b>'+escapeHtml(c.name)+'</b>」打兩次：</p>'+
+      '<input type="text" id="dn1" autocomplete="off" placeholder="第 1 次">'+
+      '<input type="text" id="dn2" autocomplete="off" placeholder="第 2 次">'+
+      '<div class="delbtns"><button id="dcancel" class="alt">取消</button><button id="dok" disabled>確定刪除</button></div></div>';
+    document.body.appendChild(ov);
+    const i1=ov.querySelector('#dn1'), i2=ov.querySelector('#dn2'), ok=ov.querySelector('#dok');
+    const chk=()=>{ ok.disabled=!(i1.value.trim()===c.name && i2.value.trim()===c.name); };
+    i1.oninput=chk; i2.oninput=chk;
+    const close=v=>{ ov.remove(); res(v); };
+    ov.querySelector('#dcancel').onclick=()=>close(false);
+    ov.onclick=e=>{ if(e.target===ov) close(false); };
+    ok.onclick=()=>{ if(!ok.disabled) close(true); };
+    i1.focus();
+  });
+}
 async function deleteCat(c){
-  const ok = confirm('確定要刪除「'+c.name+'」同佢所有記錄？呢個動作刪咗就冚唔返。');
+  const ok = await confirmDeleteCat(c);
   if(!ok) return;
   cats = cats.filter(x=>x.id!==c.id);
   await safeSet('cats', cats);
