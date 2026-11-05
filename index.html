@@ -832,7 +832,7 @@ function renderHealthCard(cat){
   el.innerHTML =
     '<div class="hc-title">健康檔案</div>'+
     vetBanner +
-    '<div class="furrow"><label>隻貓毛色</label>'+Object.keys(FURS).map(k=>'<button type="button" class="furdot'+((cat.fur||'cream')===k?' sel':'')+'" data-fur="'+k+'" title="'+FURS[k].label+'" style="background:'+FURS[k].c+'"></button>').join('')+'</div>'+
+    '<div class="furrow"><label>隻貓毛色</label>'+Object.keys(FURS).map(k=>'<button type="button" class="furdot'+((cat.fur||'cream')===k?' sel':'')+'" data-fur="'+k+'" title="'+FURS[k].label+'" style="background:'+(FURS[k].bg||FURS[k].c)+'"></button>').join('')+'</div>'+
     '<div class="hc-condition"><label>病史</label><input type="text" id="conditionInput" value="'+escapeHtml(cat.condition)+'" placeholder="例:HCM 肥厚型心肌病"></div>'+
     (cat.medications&&cat.medications.length ?
       '<table class="medtable"><tr><th>藥物</th><th>劑量</th><th>今日進度</th><th></th></tr>'+rows+'</table>'
@@ -1501,14 +1501,24 @@ const FURS={
   orange:{label:'橘',c:'#f2b377',t:'#d98a3d',w:'#fbd9b0'},
   gray:{label:'灰',c:'#b9bec6',t:'#8d939d',w:'#dfe3e8'},
   black:{label:'黑',c:'#4e4b55',t:'#34323a',w:'#6d6a77'},
-  brown:{label:'棕',c:'#c89a6b',t:'#8a5a33',w:'#e7c9a3'}
+  brown:{label:'棕',c:'#c89a6b',t:'#8a5a33',w:'#e7c9a3'},
+  tri:{label:'三色(灰白橘)',c:'#fffaf2',t:'#8d939d',w:'#fffaf2',eye:'#9a8a2e',bg:'conic-gradient(#8d939d 0 33%,#e8a15a 0 66%,#fffaf2 0)'}
 };
+function triOverlay(g){
+  const sp=(x,y,ch)=>{ if('ctw'.includes(g[y][x])) g[y][x]=ch; };
+  for(let x=5;x<=10;x++) if(x!==7&&x!==8) sp(x,4,'G');
+  for(let x=2;x<=13;x++) if(x!==7&&x!==8) sp(x,5,x>=12?'O':'G');
+  [2,3].forEach(x=>sp(x,6,'G')); [12,13].forEach(x=>{ sp(x,6,'O'); sp(x,7,'O'); sp(x,8,'O'); });
+  for(let y=2;y<=4;y++) for(let x=11;x<=13;x++) if(g[y][x]==='t') g[y][x]='O';
+  for(let y=11;y<=14;y++){ for(let x=2;x<=5;x++) sp(x,y,'G'); for(let x=9;x<=13;x++) sp(x,y,'O'); }
+}
 function pixSvg(mood,fur,opt){
   opt=opt||{}; const g=pixGrid(mood);
   if(opt.blink){ [6,7].forEach(y=>[4,5,10,11].forEach(x=>{ if('eh'.includes(g[y][x])) g[y][x]='c'; })); [4,5,10,11].forEach(x=>{ g[7][x]='o'; }); }
   if(opt.tailUp){ g[13][15]='.'; g[12][15]='o'; g[11][15]='o'; }
   if(opt.squint){ [6,7].forEach(y=>[4,5,10,11].forEach(x=>{ g[y][x]='c'; })); [[4,6],[5,7],[4,8],[11,6],[10,7],[11,8]].forEach(([x,y])=>{ g[y][x]='o'; }); }
-  let r=''; const F=FURS[fur]||FURS.cream; const pal=Object.assign({},PIX_PAL,{c:F.c,t:F.t,w:F.w});
+  let r=''; const F=FURS[fur]||FURS.cream; const pal=Object.assign({},PIX_PAL,{c:F.c,t:F.t,w:F.w,G:'#8d939d',O:'#e8a15a'}); if(F.eye) pal.e=F.eye;
+  if(fur==='tri') triOverlay(g);
   g.forEach((row,y)=>row.forEach((ch,x)=>{ if(ch!=='.' && pal[ch]) r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${pal[ch]}"/>`; }));
   return `<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
 }
