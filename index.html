@@ -290,7 +290,7 @@
   #pixcat{position:fixed;right:8px;bottom:0;z-index:30;display:flex;flex-direction:column;align-items:flex-end;pointer-events:none;}
   #pixcat .pcbody{pointer-events:auto;cursor:pointer;border:none;background:none;padding:0;width:84px;height:84px;-webkit-tap-highlight-color:transparent;}
   #pixcat svg{width:100%;height:100%;display:block;image-rendering:pixelated;}
-  #pixcat .pcbubble{pointer-events:auto;background:var(--card);border:2px solid var(--ink);border-radius:6px;padding:5px 9px;margin:0 6px 4px 0;font-size:12px;color:var(--ink);max-width:190px;position:relative;box-shadow:2px 2px 0 var(--ink);}
+  #pixcat .pcbubble{pointer-events:auto;background:var(--card);border:2px solid var(--ink);border-radius:6px;padding:5px 9px;margin:0 6px 4px 0;font-size:12px;color:var(--ink);max-width:230px;position:relative;box-shadow:2px 2px 0 var(--ink);}
   #pixcat .pcbubble.sad{border-color:var(--brick);box-shadow:2px 2px 0 var(--brick);color:var(--brick);}
   #pixcat .pcbubble[hidden]{display:none;}
   #pixcat.happy .pcbody{animation:pcbob 1.4s steps(2,end) infinite;}
@@ -1328,6 +1328,11 @@ function pixGrid(mood){
     set(4,6,'h'); set(10,6,'h');
     set(3,8,'p'); set(12,8,'p');
     set(6,9,'m'); set(9,9,'m'); set(7,10,'m'); set(8,10,'m');
+  } else if(mood==='half'){
+    [[4,6],[5,6],[4,7],[5,7],[10,6],[11,6],[10,7],[11,7]].forEach(([x,y])=>set(x,y,'e'));
+    set(4,6,'h'); set(10,6,'h');
+    set(7,9,'m'); set(8,9,'m'); set(6,8,'c'); 
+    set(6,9,'m'); set(9,9,'m');
   } else {
     // 愁眉苦臉
     set(4,5,'o'); set(5,5,'o'); set(10,5,'o'); set(11,5,'o');
@@ -1353,16 +1358,29 @@ function medStatus(cat){
   let given=0; meds.forEach(m=>{ given+=Math.min(m.freq||1, all.filter(e=>e.type==='med'&&e.date===t&&e.fields.name===m.name).length); });
   return {expected,given};
 }
+function missingMeds(cat){
+  const t=todayStr(); const all=entriesByCat[cat.id]||[];
+  return regularMeds(cat).filter(m=>all.filter(e=>e.type==='med'&&e.date===t&&e.fields.name===m.name).length < (m.freq||1));
+}
 function updatePixCat(cat){
   const el=document.getElementById('pixcat'); if(!el) return;
   if(!cat){ el.hidden=true; return; }
   const st=medStatus(cat); const left=st.expected-st.given;
-  const mood=(st.expected>0 && left>0)?'sad':'happy';
-  const msg= mood==='sad' ? `${cat.name}:仲有 ${left} 次藥未食…` : (st.expected>0 ? `${cat.name}:食哂藥喇,少少開心 ♥` : `${cat.name}:喵~`);
+  let mood, msg, warn=false;
+  if(st.expected===0){ mood='happy'; msg=`${cat.name}:喵~`; }
+  else if(left<=0){ mood='happy'; msg=`${cat.name}:好嘢!今日唔駛再食藥喇 ♥`; }
+  else if(left===1){
+    mood='half'; warn=true;
+    const m=missingMeds(cat)[0]; const nm=m?(m.name+(m.note?'（'+m.note+'）':'')):'';
+    msg=`${cat.name}:剩返最後一隻藥!仲未食:${nm}`;
+  }
+  else if(st.given>0 && st.given*2>=st.expected){ mood='half'; msg=`${cat.name}:食到一半喇,就嚟食哂,少少開心`; }
+  else { mood='sad'; msg=`${cat.name}:仲有 ${left} 次藥未食…`; }
+  const bcls=(mood==='sad'||warn)?'sad':mood;
   const key=cat.id+'|'+mood+'|'+msg+'|'+pixHidden;
-  el.hidden=false; el.className=mood+' noprint';
+  el.hidden=false; el.className=(mood==='sad'?'sad':'happy')+' noprint';
   if(key===pixLast) return; pixLast=key;
-  el.innerHTML=`<div class="pcbubble ${mood}" ${pixHidden?'hidden':''}>${escapeHtml(msg)}</div><button class="pcbody" type="button" aria-label="${escapeHtml(msg)}">${pixSvg(mood)}</button>`;
+  el.innerHTML=`<div class="pcbubble ${bcls}" ${pixHidden?'hidden':''}>${escapeHtml(msg)}</div><button class="pcbody" type="button" aria-label="${escapeHtml(msg)}">${pixSvg(mood)}</button>`;
   el.querySelector('.pcbody').onclick=()=>{ pixHidden=!pixHidden; pixLast=''; updatePixCat(cat); };
 }
 
