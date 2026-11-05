@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>貓貓日記</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="貓貓日記">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#E7E1CE">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAADAklEQVR4nOzdIWtVYRyA8aPYVkwGNZlsGmwajWK0WERxLAli3zcwOybYLMsWwWqTYTQJg+HAZFkV/QD3uXDvdu85d/x+8Yxz957x8ML+nHvOlZOjwwFmuTJAEAdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdpnDjevNwZFvT2/d5wUWzK5ds5SOIgiYMkDpI4SOIgiYO02jjqH/q9F7t1yq+tHwt91DDhEUiteffVkzrl+untmcd3xrh8OwdJHCRxkMRBEgdJHCRxkMRBGieOmnQtZ4l7ZybrfP8yZ2TnIImDJA6SOEjiIImDJA7SxsQx5waZm3cfDpN0/P3LsMnsHCRxkMRBEgdJHCRxkMRBEgdpnDgmO7Y6X+d6mQfD2tk5SOIgiYMkDpI4SOIgiYO0MXFs3bhTP3rw+PXM45/fPRtWb7ILOzs7B0kcJHGQxEESB0kcJHGQxEHamDhqoDS6yS7s7OwcJHGQxEESB0kcJHGQxEGaXBx/vx7PPL6eG2T+HHwbFrTEwuoa/7t8/+bM4/sf9uuU7efbM4+f/fVedg6SOEjiIImDJA6SOEjiIImDNLk4agq0hJoODT1Tuvrk3rDgp+33KWWJa5xzLd5lzwjEQRIHSRwkcZDEQRIH6dLJ0eGwdnNeMP7x0zpeffX00cNhQeMubHXDjDnsHCRxkMRBEgdJHCRxkMRBEgdptUOwGnatZ6B0kcyZ2rnZhxGIgyQOkjhI4iCJgyQO0kWI4/T3z5nHt67dGsb77WtbwOrYOUjiIImDJA6SOEjiIImDJA7SRYhj3FnT6JOuuqPK461ZIXGQxEESB0kcJHGQxEHamDg27lk8c5zvwnypiRGIgyQOkjhI4iCJgyQOkjhIk3u8NTN5vDXTIg6SOEjiIImDJA6SOEjjzDnYCHYOkjhI4iCJgyQOkjhI4iCJgyQOkjhI4iCJgyQOkjhI4iCJgyQOkjhI4iCJgyQO0j8AAAD//waXDHYAAAAGSURBVAMAdvNztmmkZSsAAAAASUVORK5CYII=">
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAADAklEQVR4nOzdIWtVYRyA8aPYVkwGNZlsGmwajWK0WERxLAli3zcwOybYLMsWwWqTYTQJg+HAZFkV/QD3uXDvdu85d/x+8Yxz957x8ML+nHvOlZOjwwFmuTJAEAdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdpnDjevNwZFvT2/d5wUWzK5ds5SOIgiYMkDpI4SOIgiYO02jjqH/q9F7t1yq+tHwt91DDhEUiteffVkzrl+untmcd3xrh8OwdJHCRxkMRBEgdJHCRxkMRBGieOmnQtZ4l7ZybrfP8yZ2TnIImDJA6SOEjiIImDJA7SxsQx5waZm3cfDpN0/P3LsMnsHCRxkMRBEgdJHCRxkMRBEgdpnDgmO7Y6X+d6mQfD2tk5SOIgiYMkDpI4SOIgiYO0MXFs3bhTP3rw+PXM45/fPRtWb7ILOzs7B0kcJHGQxEESB0kcJHGQxEHamDhqoDS6yS7s7OwcJHGQxEESB0kcJHGQxEGaXBx/vx7PPL6eG2T+HHwbFrTEwuoa/7t8/+bM4/sf9uuU7efbM4+f/fVedg6SOEjiIImDJA6SOEjiIImDNLk4agq0hJoODT1Tuvrk3rDgp+33KWWJa5xzLd5lzwjEQRIHSRwkcZDEQRIH6dLJ0eGwdnNeMP7x0zpeffX00cNhQeMubHXDjDnsHCRxkMRBEgdJHCRxkMRBEgdptUOwGnatZ6B0kcyZ2rnZhxGIgyQOkjhI4iCJgyQO0kWI4/T3z5nHt67dGsb77WtbwOrYOUjiIImDJA6SOEjiIImDJA7SRYhj3FnT6JOuuqPK461ZIXGQxEESB0kcJHGQxEHamDg27lk8c5zvwnypiRGIgyQOkjhI4iCJgyQOkjhIk3u8NTN5vDXTIg6SOEjiIImDJA6SOEjjzDnYCHYOkjhI4iCJgyQOkjhI4iCJgyQOkjhI4iCJgyQOkjhI4iCJgyQOkjhI4iCJgyQO0j8AAAD//waXDHYAAAAGSURBVAMAdvNztmmkZSsAAAAASUVORK5CYII=">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -319,6 +326,16 @@
   .srow button.pri{background:var(--catcolor,var(--tabby));color:#fff;border:none;font-weight:600;}
   .stocksum{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:14px;font-size:13px;}
   .stocksum b{color:var(--brick);}
+  .furrow{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:var(--ink-soft);}
+  .furdot{width:24px;height:24px;border-radius:50%;border:2px solid var(--line-strong);cursor:pointer;padding:0;}
+  .furdot.sel{border-color:var(--ink);box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink);}
+  .chiprow{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;}
+  .qchip{padding:11px 18px;border:none;border-radius:20px;background:var(--catcolor,var(--tabby));color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;}
+  .qchip.alt{background:var(--paper-2);color:var(--ink);border:1px solid var(--line-strong);font-weight:500;}
+  .editbox{display:flex;flex-wrap:wrap;gap:8px;flex:1;padding:6px 0;}
+  .editbox .fitem{flex:1 1 120px;}
+  .editbox .bloodgrid{flex-basis:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;}
+  .editbtn{border:1px solid var(--line-strong);background:var(--paper-2);border-radius:4px;font-size:11px;padding:3px 8px;color:var(--ink-soft);cursor:pointer;font-family:inherit;margin-right:4px;}
   @media(max-width:640px){
     .grid{grid-template-columns:1fr;}
     .panel.stamps{border-right:none;border-bottom:1px solid var(--line);}
@@ -654,7 +671,7 @@ function renderCatTabs(){
     el.className = 'cattab' + (c.id===activeCatId?' active':'');
     el.style.setProperty('--catcolor', c.color);
     el.innerHTML = '<span class="dot"></span><span>'+escapeHtml(c.name)+'</span><span class="delcat" title="刪除呢隻貓嘅資料">✕</span>';
-    el.onclick = async ()=>{ activeCatId = c.id; openCategory=null; await ensureEntriesLoaded(c.id); render(); };
+    el.onclick = async ()=>{ activeCatId = c.id; openCategory=null; editingMedId=null; editingStockId=null; editingEntryId=null; tileType=null; bloodParam=null; pixLast=''; await ensureEntriesLoaded(c.id); renderCatTabs(); render(); window.scrollTo({top:0}); };
     el.querySelector('.delcat').onclick = (e)=>{ e.stopPropagation(); deleteCat(c); };
     wrap.appendChild(el);
   });
@@ -778,6 +795,7 @@ function renderHealthCard(cat){
   el.innerHTML =
     '<div class="hc-title">健康檔案</div>'+
     vetBanner +
+    '<div class="furrow"><label>隻貓毛色</label>'+Object.keys(FURS).map(k=>'<button type="button" class="furdot'+((cat.fur||'cream')===k?' sel':'')+'" data-fur="'+k+'" title="'+FURS[k].label+'" style="background:'+FURS[k].c+'"></button>').join('')+'</div>'+
     '<div class="hc-condition"><label>病史</label><input type="text" id="conditionInput" value="'+escapeHtml(cat.condition)+'" placeholder="例:HCM 肥厚型心肌病"></div>'+
     (cat.medications&&cat.medications.length ?
       '<table class="medtable"><tr><th>藥物</th><th>劑量</th><th>今日進度</th><th></th></tr>'+rows+'</table>'
@@ -795,6 +813,7 @@ function renderHealthCard(cat){
     cat.condition = e.target.value.trim();
     await safeSet('cats', cats);
   };
+  el.querySelectorAll('[data-fur]').forEach(b=>b.onclick=async()=>{ cat.fur=b.dataset.fur; pixLast=''; await safeSet('cats',cats); render(); });
   el.querySelectorAll('.med-edit').forEach(btn=>{
     btn.onclick = ()=>{ editingMedId=btn.dataset.mid; renderHealthCard(cat); };
   });
@@ -896,12 +915,35 @@ function renderQuickForm(cat){
         entriesByCat[cat.id].push(entry);
         entriesByCat[cat.id].sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time));
         await safeSet('entries:'+cat.id, entriesByCat[cat.id]);
-        render();
+        render(); renderQuickForm(cat);
       };
     });
     return;
   }
 
+  if(cfg.id==='feed'||cfg.id==='water'||cfg.id==='litter'){
+    const key=cfg.fields[0].key;
+    const defaults= cfg.id==='feed'?['乾糧','罐頭','零食']:(cfg.id==='water'?['飲水','換新水']:['尿','便','尿同便']);
+    const recent=[]; (entriesByCat[cat.id]||[]).filter(e=>e.type===cfg.id).slice().reverse().forEach(e=>{ const v=(e.fields[key]||'').trim(); if(v && !defaults.includes(v) && !recent.includes(v) && recent.length<4) recent.push(v); });
+    const chips=defaults.concat(recent);
+    area.innerHTML='<div class="quickform">'+
+      '<div class="frow"><div class="fitem" style="max-width:140px"><label>時間（自動，可改）</label><input type="time" id="f_time" value="'+nowTimeStr()+'"></div></div>'+
+      '<div class="chiprow">'+chips.map((c,i)=>'<button class="qchip'+(i>=defaults.length?' alt':'')+'" data-v="'+escapeHtml(c)+'">'+escapeHtml(c)+'</button>').join('')+'</div>'+
+      (cfg.id==='litter'?'':'<div class="frow"><div class="fitem"><label>其他（自己打）</label><input type="text" id="f_other" placeholder="'+escapeHtml(cfg.fields[0].ph||'')+'"></div><button class="qchip alt" id="f_otherBtn" style="align-self:flex-end">記錄</button></div>')+
+      '<div class="frow"><div class="fitem"><label>備註（隨意，可留空）</label><input type="text" id="f_note" placeholder="想記低嘅其他嘢..."></div></div>'+
+      '<div style="font-size:11.5px;color:var(--ink-soft)">撳一個選項即時記錄。記錯咗可以喺時間線編輯或者刪除。</div></div>';
+    area.querySelector('.quickform').style.setProperty('--catcolor', cat.color);
+    const tin=document.getElementById('f_time'); let touched=false; tin.addEventListener('input',()=>{touched=true;});
+    const log=async (val)=>{
+      const e={id:'e_'+Date.now()+'_'+Math.floor(Math.random()*1000),type:cfg.id,date:selectedDate,time:(touched&&tin.value)?tin.value:nowTimeStr(),fields:{[key]:val},note:document.getElementById('f_note').value.trim()};
+      entriesByCat[cat.id]=entriesByCat[cat.id]||[]; entriesByCat[cat.id].push(e);
+      entriesByCat[cat.id].sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time));
+      await safeSet('entries:'+cat.id, entriesByCat[cat.id]); render(); renderQuickForm(cat);
+    };
+    area.querySelectorAll('.qchip[data-v]').forEach(b=>b.onclick=()=>log(b.dataset.v));
+    const ob=document.getElementById('f_otherBtn'); if(ob) ob.onclick=()=>{ const v=document.getElementById('f_other').value.trim(); if(v) log(v); };
+    return;
+  }
   if(cfg.id==='bloodtest'){
     const lastEntry = (entriesByCat[cat.id]||[]).filter(e=>e.type==='bloodtest')
       .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).pop();
@@ -1037,6 +1079,43 @@ function bloodDetailHtml(fields){
   return items.length ? '<div class="bloodresult">'+items.join('')+'</div>' : '';
 }
 
+let editingEntryId=null;
+function fieldInput(f,val,id){
+  if(f.type==='select') return '<select id="'+id+'">'+f.opts.map(o=>'<option'+(o===val?' selected':'')+'>'+escapeHtml(o)+'</option>').join('')+'</select>';
+  return '<input type="'+(f.type==='number'?'text':(f.type||'text'))+'"'+(f.type==='number'?' inputmode="decimal"':'')+' id="'+id+'" value="'+escapeHtml(val||'')+'">';
+}
+function entryEditHtml(cat,e){
+  const cfg=CATEGORIES.find(c=>c.id===e.type)||{fields:[]};
+  let h='<div class="editbox">'+
+   '<div class="fitem"><label>日期</label><input type="date" id="ee_date" value="'+e.date+'"></div>'+
+   '<div class="fitem"><label>時間</label><input type="time" id="ee_time" value="'+escapeHtml(e.time||'')+'"></div>';
+  if(e.type==='bloodtest'){
+    h+='<div class="bloodgrid">'+BLOOD_PARAMS.map(p=>'<div class="fitem"><label>'+escapeHtml(p.label.split(' ')[0])+'</label><input type="text" inputmode="decimal" id="eb_'+p.key+'" value="'+escapeHtml(e.fields[p.key]||'')+'"></div>').join('')+'</div>';
+  } else if(e.type==='med'){
+    h+='<div class="fitem"><label>藥物</label><select id="ee_med">'+(cat.medications||[]).map(m=>'<option value="'+m.id+'"'+(m.name===e.fields.name?' selected':'')+'>'+escapeHtml(m.name)+'</option>').join('')+'</select></div>';
+  } else {
+    cfg.fields.forEach(f=>{ h+='<div class="fitem"><label>'+escapeHtml(f.label)+'</label>'+fieldInput(f,e.fields[f.key],'ef_'+f.key)+'</div>'; });
+  }
+  h+='<div class="fitem" style="flex-basis:100%"><label>備註</label><input type="text" id="ee_note" value="'+escapeHtml(e.note||'')+'"></div>'+
+     '<div style="flex-basis:100%"><button class="addmed-btn" id="ee_save">儲存</button> <button class="med-del" id="ee_cancel">取消</button></div></div>';
+  return h;
+}
+async function saveEntryEdit(cat,e){
+  const d=document.getElementById('ee_date').value, t=document.getElementById('ee_time').value;
+  if(d) e.date=d; if(t) e.time=t;
+  e.note=document.getElementById('ee_note').value.trim();
+  const cfg=CATEGORIES.find(c=>c.id===e.type)||{fields:[]};
+  if(e.type==='bloodtest'){
+    const f={}; BLOOD_PARAMS.forEach(p=>{ const v=document.getElementById('eb_'+p.key).value.trim(); if(v!=='') f[p.key]=v; }); e.fields=f;
+  } else if(e.type==='med'){
+    const m=(cat.medications||[]).find(x=>x.id===document.getElementById('ee_med').value); if(m) e.fields={name:m.name,dose:m.dose};
+  } else {
+    const f={}; cfg.fields.forEach(x=>{ const el=document.getElementById('ef_'+x.key); if(el) f[x.key]=el.value.trim?el.value.trim():el.value; }); e.fields=f;
+  }
+  entriesByCat[cat.id].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  await safeSet('entries:'+cat.id, entriesByCat[cat.id]);
+  editingEntryId=null; render();
+}
 function renderTimeline(cat){
   const tl = document.getElementById('timeline');
   const list = (entriesByCat[cat.id]||[]).filter(e=>e.date===selectedDate);
@@ -1077,6 +1156,9 @@ function renderTimeline(cat){
       const detailParts = Object.entries(e.fields).filter(([k,v])=>v).map(([k,v])=>escapeHtml(v));
       detail = detailParts.join(' · ');
     }
+    if(editingEntryId===e.id){
+      return '<div class="entry" style="--tilt:0deg"><div class="stampicon" style="--c:'+cat.color+'">'+ICONS[e.type]+'</div>'+entryEditHtml(cat,e)+'</div>';
+    }
     return '<div class="entry" style="--tilt:'+tilt+'deg">'+
       '<div class="stampicon" style="--c:'+cat.color+'">'+ICONS[e.type]+'</div>'+
       '<div class="entrybody">'+
@@ -1084,9 +1166,16 @@ function renderTimeline(cat){
         (detail?'<div class="entrydetail">'+detail+'</div>':'')+
         (e.note?'<div class="entrynote">「'+escapeHtml(e.note)+'」</div>':'')+
       '</div>'+
-      '<button class="delbtn" data-id="'+e.id+'">刪除</button>'+
+      '<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="editbtn" data-eid="'+e.id+'">編輯</button><button class="delbtn" data-id="'+e.id+'">刪除</button></div>'+
     '</div>';
   }).join('');
+  tl.querySelectorAll('.editbtn').forEach(b=>b.onclick=()=>{ editingEntryId=b.dataset.eid; renderTimeline(cat); });
+  const eeS=document.getElementById('ee_save');
+  if(eeS){
+    const ent=(entriesByCat[cat.id]||[]).find(x=>x.id===editingEntryId);
+    eeS.onclick=()=>saveEntryEdit(cat,ent);
+    document.getElementById('ee_cancel').onclick=()=>{ editingEntryId=null; renderTimeline(cat); };
+  }
   tl.querySelectorAll('.delbtn').forEach(btn=>{
     btn.onclick = async ()=>{
       entriesByCat[cat.id] = entriesByCat[cat.id].filter(e=>e.id!==btn.dataset.id);
@@ -1369,9 +1458,17 @@ function pixGrid(mood){
   }
   return g;
 }
-function pixSvg(mood){
-  const g=pixGrid(mood); let r='';
-  g.forEach((row,y)=>row.forEach((ch,x)=>{ if(ch!=='.' && PIX_PAL[ch]) r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${PIX_PAL[ch]}"/>`; }));
+const FURS={
+  cream:{label:'奶油',c:'#f4e4d0',t:'#d8b48c',w:'#fffaf2'},
+  white:{label:'白',c:'#fffaf2',t:'#e6ddd0',w:'#ffffff'},
+  orange:{label:'橘',c:'#f2b377',t:'#d98a3d',w:'#fbd9b0'},
+  gray:{label:'灰',c:'#b9bec6',t:'#8d939d',w:'#dfe3e8'},
+  black:{label:'黑',c:'#4e4b55',t:'#34323a',w:'#6d6a77'},
+  brown:{label:'棕',c:'#c89a6b',t:'#8a5a33',w:'#e7c9a3'}
+};
+function pixSvg(mood,fur){
+  const g=pixGrid(mood); let r=''; const F=FURS[fur]||FURS.cream; const pal=Object.assign({},PIX_PAL,{c:F.c,t:F.t,w:F.w});
+  g.forEach((row,y)=>row.forEach((ch,x)=>{ if(ch!=='.' && pal[ch]) r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${pal[ch]}"/>`; }));
   return `<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
 }
 let pixHidden=false, pixLast='';
@@ -1400,10 +1497,10 @@ function updatePixCat(cat){
   else if(st.given>0 && st.given*2>=st.expected){ mood='half'; msg=`${cat.name}:食到一半喇,就嚟食哂,少少開心`; }
   else { mood='sad'; msg=`${cat.name}:仲有 ${left} 次藥未食…`; }
   const bcls=(mood==='sad'||warn)?'sad':mood;
-  const key=cat.id+'|'+mood+'|'+msg+'|'+pixHidden;
+  const key=cat.id+'|'+mood+'|'+msg+'|'+pixHidden+'|'+(cat.fur||'');
   el.hidden=false; el.className=(mood==='sad'?'sad':'happy')+' noprint';
   if(key===pixLast) return; pixLast=key;
-  el.innerHTML=`<div class="pcbubble ${bcls}" ${pixHidden?'hidden':''}>${escapeHtml(msg)}</div><button class="pcbody" type="button" aria-label="${escapeHtml(msg)}">${pixSvg(mood)}</button>`;
+  el.innerHTML=`<div class="pcbubble ${bcls}" ${pixHidden?'hidden':''}>${escapeHtml(msg)}</div><button class="pcbody" type="button" aria-label="${escapeHtml(msg)}">${pixSvg(mood,cat.fur)}</button>`;
   el.querySelector('.pcbody').onclick=()=>{ pixHidden=!pixHidden; pixLast=''; updatePixCat(cat); };
 }
 
