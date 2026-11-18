@@ -382,6 +382,14 @@
   .bbtns{display:flex;gap:10px;justify-content:center;margin-top:8px;}
   .bbtns button.alt{padding:9px 20px;border-radius:5px;border:1px solid var(--line-strong);background:var(--paper-2);font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer;}
   @media print{.breathov{display:none !important;}}
+  .stool.s0{color:var(--moss);font-weight:600;}
+  .stool.s1{color:#a87414;font-weight:600;}
+  .stool.s2{color:var(--brick);font-weight:700;}
+  .stoolh{font-size:12.5px;color:var(--ink-soft);margin:8px 0 0;}
+  .stoolchip{display:flex;flex-direction:column;align-items:flex-start;line-height:1.25;padding:9px 14px;border-radius:12px;}
+  .stoolchip small{font-weight:400;font-size:10.5px;opacity:.85;}
+  .stoolchip.s1{background:#c9962b;}
+  .stoolchip.s2{background:var(--brick);}
   @media(max-width:640px){
     .grid{grid-template-columns:1fr;}
     .panel.stamps{border-right:none;border-bottom:1px solid var(--line);}
@@ -461,6 +469,18 @@ const ICONS = {
   vet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v6c0 5-3 8-7 9-4-1-7-4-7-9V6l7-3Z"/><path d="M12 8v6M9 11h6"/></svg>',
   bloodtest: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3h8M9 3v7.3l-3.6 8.2A1.8 1.8 0 0 0 7 21h10a1.8 1.8 0 0 0 1.6-2.5L15 10.3V3"/><path d="M8.3 14.5h7.4"/></svg>'
 };
+const STOOL_OPTS=[
+  {v:'正常成條',lv:0,hint:'成條、有形、易鏟'},
+  {v:'偏硬/乾',lv:1,hint:'硬粒、好乾'},
+  {v:'軟身',lv:1,hint:'成形但軟、黐砂'},
+  {v:'稀爛',lv:2,hint:'無形、糊狀'},
+  {v:'水瀉',lv:2,hint:'液體'},
+  {v:'帶血',lv:2,hint:'見到血絲或血'},
+  {v:'帶黏液',lv:2,hint:'有透明膠狀物'},
+  {v:'有蟲/異物',lv:2,hint:'蟲、毛球、異物'}
+];
+function stoolLevel(v){ const o=STOOL_OPTS.find(x=>x.v===v); return o?o.lv:0; }
+function stoolHtml(v){ if(!v) return ''; const lv=stoolLevel(v); return '<span class="stool s'+lv+'">'+escapeHtml(v)+(lv===2?' ⚠':'')+'</span>'; }
 const CATEGORIES = [
   {id:'med',label:'食藥',fields:[]},
   {id:'resp',label:'呼吸',fields:[
@@ -469,7 +489,7 @@ const CATEGORIES = [
   ]},
   {id:'feed',label:'餵食',fields:[{key:'detail',label:'份量 / 種類',type:'text',ph:'例:半罐吞拿魚'}]},
   {id:'water',label:'飲水',fields:[{key:'detail',label:'情況',type:'text',ph:'例:換新水'}]},
-  {id:'litter',label:'如廁',fields:[{key:'kind',label:'類型',type:'select',opts:['尿','便','尿同便']}]},
+  {id:'litter',label:'如廁',fields:[{key:'kind',label:'類型',type:'select',opts:['尿','便','尿同便']},{key:'stool',label:'便便狀態（淨係尿就留空）',type:'select',opts:['','正常成條','偏硬/乾','軟身','稀爛','水瀉','帶血','帶黏液','有蟲/異物']}]},
   {id:'play',label:'玩耍',fields:[{key:'duration',label:'時間(分鐘)',type:'number',ph:'15'}]},
   {id:'groom',label:'梳毛',fields:[]},
   {id:'weight',label:'體重',fields:[{key:'value',label:'體重(kg)',type:'number',ph:'4.2',step:'0.1'}]},
@@ -1007,13 +1027,23 @@ function renderQuickForm(cat){
       '<div style="font-size:11.5px;color:var(--ink-soft)">撳一個選項即時記錄。記錯咗可以喺時間線編輯或者刪除。</div></div>';
     area.querySelector('.quickform').style.setProperty('--catcolor', cat.color);
     const tin=document.getElementById('f_time'); let touched=false; tin.addEventListener('input',()=>{touched=true;});
-    const log=async (val)=>{
-      const e={id:'e_'+Date.now()+'_'+Math.floor(Math.random()*1000),type:cfg.id,date:selectedDate,time:(touched&&tin.value)?tin.value:nowTimeStr(),fields:{[key]:val},note:document.getElementById('f_note').value.trim()};
+    const log=async (val,extra)=>{
+      const e={id:'e_'+Date.now()+'_'+Math.floor(Math.random()*1000),type:cfg.id,date:selectedDate,time:(touched&&tin.value)?tin.value:nowTimeStr(),fields:Object.assign({[key]:val},extra||{}),note:document.getElementById('f_note').value.trim()};
       entriesByCat[cat.id]=entriesByCat[cat.id]||[]; entriesByCat[cat.id].push(e);
       entriesByCat[cat.id].sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time));
       await safeSet('entries:'+cat.id, entriesByCat[cat.id]); render(); renderQuickForm(cat);
     };
-    area.querySelectorAll('.qchip[data-v]').forEach(b=>b.onclick=()=>log(b.dataset.v));
+    area.querySelectorAll('.qchip[data-v]').forEach(b=>b.onclick=()=>{
+      const v=b.dataset.v;
+      if(cfg.id==='litter' && v!=='尿'){
+        const row=area.querySelector('.chiprow');
+        row.insertAdjacentHTML('beforebegin','<div class="stoolq"><div class="stoolh">「'+escapeHtml(v)+'」嘅便便狀態？撳一個就記錄</div></div>');
+        row.innerHTML=STOOL_OPTS.map(o=>'<button class="qchip stoolchip s'+o.lv+'" data-st="'+escapeHtml(o.v)+'" title="'+escapeHtml(o.hint)+'">'+escapeHtml(o.v)+'<small>'+escapeHtml(o.hint)+'</small></button>').join('')+'<button class="qchip alt" data-st="">唔記狀態</button>';
+        row.querySelectorAll('[data-st]').forEach(sb=>sb.onclick=()=>log(v, sb.dataset.st?{stool:sb.dataset.st}:{}));
+        return;
+      }
+      log(v);
+    });
     const ob=document.getElementById('f_otherBtn'); if(ob) ob.onclick=()=>{ const v=document.getElementById('f_other').value.trim(); if(v) log(v); };
     return;
   }
@@ -1229,6 +1259,8 @@ function renderTimeline(cat){
       detail = (over ? '<span class="bval high">'+escapeHtml(e.fields.rate)+'</span>' : escapeHtml(e.fields.rate||''))+
         ' 下/分鐘 · '+escapeHtml(state)+
         (over ? ' <span class="bval high">⚠ 超過'+th+'下</span>' : '');
+    } else if(e.type==='litter'){
+      detail = escapeHtml(e.fields.kind||'') + (e.fields.stool?' · '+stoolHtml(e.fields.stool):'');
     } else {
       const detailParts = Object.entries(e.fields).filter(([k,v])=>v).map(([k,v])=>escapeHtml(v));
       detail = detailParts.join(' · ');
@@ -1467,6 +1499,12 @@ function renderReport(cat){
     `${lineChart({series:r.series,hlines:[{y:35,label:'清醒 35'},{y:25,label:'睡覺 25'}],width:W,height:190,aria:'呼吸走勢圖'})}`+
     (rl.length?`<table class="rtable"><tr><th>日期時間</th><th>狀態</th><th>每分鐘</th></tr>${rl.slice(-10).reverse().map(e=>`<tr><td>${e.date} ${e.time}</td><td>${escapeHtml(e.fields.state||'')}</td><td class="${respOver(e)?'hi':''}">${escapeHtml(e.fields.rate)}${respOver(e)?' ⚠':''}</td></tr>`).join('')}</table>`:'')+`</div>`;
 
+  const stoolList=entriesOf(cat,'litter').filter(e=>e.fields.stool && tsOf(e)>=Date.now()-14*DAY);
+  if(stoolList.length){
+    const bad=stoolList.filter(e=>stoolLevel(e.fields.stool)>0);
+    html+=`<div class="rsec"><h3>便便狀態（最近 14 日，共 ${stoolList.length} 次有記狀態）</h3><div class="chips"><span>正常 <b>${stoolList.length-bad.length}</b></span><span>需留意 <b class="${bad.length?'bad':''}">${bad.length}</b></span></div>`+
+      (bad.length?`<table class="rtable"><tr><th>日期時間</th><th>類型</th><th>狀態</th></tr>${bad.slice().reverse().slice(0,10).map(e=>`<tr><td>${e.date} ${e.time}</td><td>${escapeHtml(e.fields.kind||'')}</td><td class="${stoolLevel(e.fields.stool)===2?'hi':''}">${escapeHtml(e.fields.stool)}</td></tr>`).join('')}</table>`:'<div style="font-size:12.5px;color:var(--ink-soft)">冇異常記錄</div>')+`</div>`;
+  }
   if(L){
     const rowsB=BLOOD_PARAMS.filter(p=>bloodVal(L,p.key)!==null).map(p=>{
       const v=bloodVal(L,p.key), f=bloodFlag(p,v), pv=P?bloodVal(P,p.key):null;
