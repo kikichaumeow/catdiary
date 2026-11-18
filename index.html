@@ -357,6 +357,31 @@
   .lowbanner[hidden]{display:none;}
   .datepick{position:relative;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1px solid var(--line-strong);border-radius:50%;background:var(--paper-2);cursor:pointer;font-size:16px;overflow:hidden;}
   .datepick input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
+  .breathbtn{width:100%;padding:12px;margin-bottom:10px;border:2px dashed var(--catcolor,var(--tabby));border-radius:8px;background:var(--paper-2);color:var(--ink);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;}
+  .breathov{position:fixed;inset:0;z-index:120;background:var(--paper);overflow:auto;-webkit-overflow-scrolling:touch;}
+  .bwrap{max-width:480px;margin:0 auto;min-height:100%;padding:56px 20px 28px;text-align:center;position:relative;box-sizing:border-box;}
+  .bclose{position:absolute;top:12px;right:12px;width:38px;height:38px;border-radius:50%;border:1px solid var(--line-strong);background:var(--paper-2);font-size:16px;cursor:pointer;color:var(--ink);}
+  .bstate{display:flex;justify-content:center;gap:8px;margin-bottom:14px;}
+  .bstate button{padding:8px 22px;border-radius:18px;border:1px solid var(--line-strong);background:var(--paper-2);font-family:inherit;font-size:14px;color:var(--ink);cursor:pointer;}
+  .bstate button.on{background:var(--tabby);color:#fff;border-color:transparent;font-weight:600;}
+  .blabel{font-size:12px;color:var(--ink-soft);margin-top:6px;}
+  .bbig{font-family:'IBM Plex Mono',monospace;font-size:64px;font-weight:600;line-height:1.1;color:var(--ink);}
+  .brow{display:flex;justify-content:space-around;margin:8px 0 6px;}
+  .bmid{font-family:'IBM Plex Mono',monospace;font-size:44px;font-weight:600;line-height:1.1;color:var(--ink);}
+  .bhint{font-size:12.5px;color:var(--ink-soft);margin:8px 0;}
+  .bcircle{width:min(62vw,250px);height:min(62vw,250px);border-radius:50%;border:16px solid var(--tabby);background:var(--card);margin:12px auto;display:block;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+  .bcircle:disabled{opacity:.4;}
+  .bcircle.pulse{animation:bpulse .18s ease-out;}
+  @keyframes bpulse{0%{transform:scale(.93);background:var(--paper-2);}100%{transform:scale(1);}}
+  .bresult{background:var(--card);border:2px solid var(--ink);border-radius:8px;padding:12px;margin:10px 0;box-shadow:3px 3px 0 var(--ink);}
+  .bresult .rbig{font-family:'IBM Plex Mono',monospace;font-size:40px;font-weight:700;}
+  .bresult .rbig small{font-size:14px;font-weight:400;color:var(--ink-soft);}
+  .bresult .rbig.over{color:var(--brick);}
+  .bresult .rsub{font-size:12.5px;color:var(--ink-soft);margin:4px 0 10px;}
+  .bresult .use{padding:12px 26px;border:none;border-radius:6px;background:var(--tabby);color:#fff;font-weight:700;font-size:15px;font-family:inherit;cursor:pointer;}
+  .bbtns{display:flex;gap:10px;justify-content:center;margin-top:8px;}
+  .bbtns button.alt{padding:9px 20px;border-radius:5px;border:1px solid var(--line-strong);background:var(--paper-2);font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer;}
+  @media print{.breathov{display:none !important;}}
   @media(max-width:640px){
     .grid{grid-template-columns:1fr;}
     .panel.stamps{border-right:none;border-bottom:1px solid var(--line);}
@@ -1061,6 +1086,10 @@ function renderQuickForm(cat){
     };
     stateEl.addEventListener('change', checkResp);
     rateEl.addEventListener('input', checkResp);
+    area.querySelector('.quickform').insertAdjacentHTML('afterbegin','<button type="button" class="breathbtn" id="breathBtn">⏱ 數呼吸（數足 1 分鐘）</button>');
+    document.getElementById('breathBtn').onclick=()=>openBreathCounter(stateEl.value,(state,rate)=>{
+      stateEl.value=state; rateEl.value=rate; checkResp();
+    });
   }
 }
 
@@ -1685,6 +1714,62 @@ function renderMeds(cat){
     m.stock={qty:base+add,start:base+add,since:Date.now()};
     await safeSet('cats',cats); renderMeds(cat);
   });
+}
+
+// ================= 數呼吸 =================
+function openBreathCounter(initState,onUse){
+  const DUR=60000;
+  const ov=document.createElement('div'); ov.className='breathov noprint';
+  ov.innerHTML='<div class="bwrap">'+
+    '<button class="bclose" id="bClose" aria-label="關閉">✕</button>'+
+    '<div class="bstate"><button data-s="清醒">清醒</button><button data-s="睡覺">睡覺</button></div>'+
+    '<div class="blabel">時間（秒）</div><div class="bbig" id="bTime">0.0</div>'+
+    '<div class="brow"><div><div class="blabel">次數</div><div class="bmid" id="bCount">0</div></div>'+
+    '<div><div class="blabel">預計每分鐘</div><div class="bmid" id="bBpm">—</div></div></div>'+
+    '<div class="bhint" id="bHint">隻貓每吸一下氣（肚上升）就撳一下圓圈，第一下開始計時，滿 1 分鐘自動停</div>'+
+    '<button class="bcircle" id="bTap" aria-label="撳一下代表一下呼吸"></button>'+
+    '<div class="bresult" id="bResult" hidden></div>'+
+    '<div class="bbtns"><button id="bReset" class="alt">重數</button><button id="bStop" class="alt" hidden>提早停</button></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  document.body.style.overflow='hidden';
+  let state=initState||'清醒', count=0, t0=null, timer=null, done=false, lock=null;
+  const $=id=>ov.querySelector(id);
+  const th=()=>RESP_THRESHOLD[state]||35;
+  const setState=s=>{ state=s; ov.querySelectorAll('.bstate button').forEach(b=>b.classList.toggle('on',b.dataset.s===s)); paint(); };
+  const el=()=>t0===null?0:Math.min(DUR,performance.now()-t0);
+  function paint(){
+    const e=el(); $('#bTime').textContent=(e/1000).toFixed(1); $('#bCount').textContent=count;
+    const bpm=(e>=10000)?Math.round(count*60000/e):null;
+    const bEl=$('#bBpm'); bEl.textContent=bpm===null?'—':bpm; bEl.style.color=(bpm!==null&&bpm>th())?'var(--brick)':'';
+  }
+  async function wake(){ try{ if(navigator.wakeLock) lock=await navigator.wakeLock.request('screen'); }catch(_){} }
+  function cleanup(){ clearInterval(timer); try{ if(lock) lock.release(); }catch(_){} document.body.style.overflow=''; ov.remove(); }
+  function finish(early){
+    clearInterval(timer); timer=null; done=true;
+    const e=el(); const rate=Math.round(count*60000/Math.max(e,1));
+    const over=rate>th();
+    const r=$('#bResult'); r.hidden=false;
+    r.innerHTML='<div class="rbig '+(over?'over':'')+'">'+rate+' <small>下 / 分鐘</small></div>'+
+      '<div class="rsub">'+escapeHtml(state)+' · 數咗 '+count+' 下 / '+(e/1000).toFixed(0)+' 秒'+(early?'（提早停，按比例計）':'')+(over?' · <b>高過 '+th()+'，超標</b>':' · 正常範圍')+'</div>'+
+      '<button class="use" id="bUse">用呢個數字</button>';
+    $('#bTap').disabled=true; $('#bStop').hidden=true; $('#bHint').hidden=true;
+    try{ if(navigator.vibrate) navigator.vibrate(early?60:[120,60,120]); }catch(_){}
+    $('#bUse').onclick=()=>{ cleanup(); onUse(state,rate); };
+  }
+  function tick(){ paint(); if(el()>=DUR) finish(false); }
+  $('#bTap').addEventListener('pointerdown',ev=>{
+    ev.preventDefault(); if(done) return;
+    if(t0===null){ t0=performance.now(); timer=setInterval(tick,100); $('#bStop').hidden=false; $('#bHint').hidden=true; wake(); }
+    count++; paint();
+    const c=$('#bTap'); c.classList.remove('pulse'); void c.offsetWidth; c.classList.add('pulse');
+    try{ if(navigator.vibrate) navigator.vibrate(15); }catch(_){}
+  });
+  $('#bReset').onclick=()=>{ clearInterval(timer); timer=null; t0=null; count=0; done=false; $('#bResult').hidden=true; $('#bTap').disabled=false; $('#bStop').hidden=true; $('#bHint').hidden=false; paint(); };
+  $('#bStop').onclick=()=>{ if(el()<15000){ alert('時間太短（少過 15 秒），數字唔準，請數滿 1 分鐘或者重數'); return; } finish(true); };
+  $('#bClose').onclick=cleanup;
+  ov.querySelectorAll('.bstate button').forEach(b=>b.onclick=()=>setState(b.dataset.s));
+  setState(state);
 }
 
 function escapeHtml(s){
